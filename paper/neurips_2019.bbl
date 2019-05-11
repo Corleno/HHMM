@@ -1,0 +1,391 @@
+\begin{thebibliography}{45}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[{Backurs} and {Tzamos}(2016)]{Arturs_2016}
+Arturs {Backurs} and Christos {Tzamos}.
+\newblock {Improving Viterbi is Hard: Better Runtimes Imply Faster Clique
+  Algorithms}.
+\newblock \emph{arXiv e-prints}, art. arXiv:1607.04229, Jul 2016.
+
+\bibitem[Bao et~al.(2017)Bao, Kuang, Peissig, Page, and Willett]{Bao_2017}
+Yujia Bao, Zhaobin Kuang, Peggy Peissig, David Page, and Rebecca Willett.
+\newblock Hawkes process modeling of adverse drug reactions with longitudinal
+  observational data.
+\newblock In Finale Doshi-Velez, Jim Fackler, David Kale, Rajesh Ranganath,
+  Byron Wallace, and Jenna Wiens, editors, \emph{Proceedings of the 2nd Machine
+  Learning for Healthcare Conference}, volume~68 of \emph{Proceedings of
+  Machine Learning Research}, pages 177--190, Boston, Massachusetts, 18--19 Aug
+  2017. PMLR.
+\newblock URL \url{http://proceedings.mlr.press/v68/bao17a.html}.
+
+\bibitem[Bartolomeo et~al.(2011)Bartolomeo, Trerotoli, and
+  Serio]{Bartolonemo_2011}
+N~Bartolomeo, P.~Trerotoli, and G.~Serio.
+\newblock Progression of liver cirrhosis to hcc: an application of hidden
+  markov model.
+\newblock \emph{BMC Med Research Method}, 11, 2011.
+
+\bibitem[Baydin et~al.(2018)Baydin, Pearlmutter, Andreyevich~Radul, and
+  Siskind]{Baydin_2018}
+Atilim~Gunes Baydin, Barak Pearlmutter, Alexey Andreyevich~Radul, and Jeffrey
+  Siskind.
+\newblock Automatic differentiation in machine learning: A survey.
+\newblock \emph{Journal of Machine Learning Research}, 18:\penalty0 1--43, 04
+  2018.
+
+\bibitem[Beal et~al.(2002)Beal, Ghahramani, and Rasmussen]{Beal02}
+Matthew~J. Beal, Zoubin Ghahramani, and Carl~E. Rasmussen.
+\newblock The infinite hidden markov model.
+\newblock In \emph{Machine Learning}, pages 29--245. MIT Press, 2002.
+
+\bibitem[Bladt and S{\o}rensen(2005)]{Mogens_2005}
+Mogens Bladt and Michael S{\o}rensen.
+\newblock Statistical inference for discretely observed markov jump processes.
+\newblock \emph{Journal of the Royal Statistical Society. Series B (Statistical
+  Methodology)}, 67\penalty0 (3):\penalty0 395--410, 2005.
+\newblock ISSN 13697412, 14679868.
+\newblock URL \url{http://www.jstor.org/stable/3647667}.
+
+\bibitem[Bureau et~al.(2003)Bureau, Shiboski, and Hughes]{Bureau_2003}
+Alexandre Bureau, Stephen Shiboski, and James~P. Hughes.
+\newblock Applications of continuous time hidden markov models to the study of
+  misclassified disease outcomes.
+\newblock \emph{Statistics in Medicine}, 22\penalty0 (3):\penalty0 441--462,
+  2003.
+\newblock \doi{10.1002/sim.1270}.
+\newblock URL \url{https://onlinelibrary.wiley.com/doi/abs/10.1002/sim.1270}.
+
+\bibitem[Canfell et~al.(2004)Canfell, Barnabas, J, and V]{Canfell_2004}
+K~Canfell, R~Barnabas, Patnick J, and Beral V.
+\newblock The predicted effect of changes in cervical screening practice in the
+  uk: results from a modelling study.
+\newblock \emph{British journal of cancer}, 91\penalty0 (3):\penalty0 530--536,
+  2004.
+
+\bibitem[{Cho} et~al.(2014){Cho}, {van Merrienboer}, {Gulcehre}, {Bahdanau},
+  {Bougares}, {Schwenk}, and {Bengio}]{Cho_2014}
+Kyunghyun {Cho}, Bart {van Merrienboer}, Caglar {Gulcehre}, Dzmitry {Bahdanau},
+  Fethi {Bougares}, Holger {Schwenk}, and Yoshua {Bengio}.
+\newblock {Learning Phrase Representations using RNN Encoder-Decoder for
+  Statistical Machine Translation}.
+\newblock \emph{arXiv e-prints}, art. arXiv:1406.1078, Jun 2014.
+
+\bibitem[{Chung} et~al.(2014){Chung}, {Gulcehre}, {Cho}, and
+  {Bengio}]{Chung_2014}
+Junyoung {Chung}, Caglar {Gulcehre}, KyungHyun {Cho}, and Yoshua {Bengio}.
+\newblock {Empirical Evaluation of Gated Recurrent Neural Networks on Sequence
+  Modeling}.
+\newblock \emph{arXiv e-prints}, art. arXiv:1412.3555, Dec 2014.
+
+\bibitem[Cox and Miller(1965)]{Cox_1965}
+D.~R. Cox and H.~D. Miller.
+\newblock \emph{The Theory of Stochastic Processes}.
+\newblock 1965.
+
+\bibitem[{Doetsch} et~al.(2014){Doetsch}, {Kozielski}, and
+  {Ney}]{Doestsch_2014}
+P.~{Doetsch}, M.~{Kozielski}, and H.~{Ney}.
+\newblock Fast and robust training of recurrent neural networks for offline
+  handwriting recognition.
+\newblock In \emph{2014 14th International Conference on Frontiers in
+  Handwriting Recognition}, pages 279--284, Sep. 2014.
+\newblock \doi{10.1109/ICFHR.2014.54}.
+
+\bibitem[{Dyer} et~al.(2015){Dyer}, {Ballesteros}, {Ling}, {Matthews}, and
+  {Smith}]{Dyer_2015}
+Chris {Dyer}, Miguel {Ballesteros}, Wang {Ling}, Austin {Matthews}, and Noah~A.
+  {Smith}.
+\newblock {Transition-Based Dependency Parsing with Stack Long Short-Term
+  Memory}.
+\newblock \emph{arXiv e-prints}, art. arXiv:1505.08075, May 2015.
+
+\bibitem[Gael et~al.(2009)Gael, Teh, and Ghahramani]{Gael_2008}
+Jurgen~V. Gael, Yee~W. Teh, and Zoubin Ghahramani.
+\newblock The infinite factorial hidden markov model.
+\newblock In D.~Koller, D.~Schuurmans, Y.~Bengio, and L.~Bottou, editors,
+  \emph{Advances in Neural Information Processing Systems 21}, pages
+  1697--1704. Curran Associates, Inc., 2009.
+\newblock URL
+  \url{http://papers.nips.cc/paper/3518-the-infinite-factorial-hidden-markov-model.pdf}.
+
+\bibitem[Hobolth and Jensen(2011)]{Hobolth_2011}
+Asger Hobolth and Jens~Ledet Jensen.
+\newblock Summary statistics for endpoint-conditioned continuous-time markov
+  chains.
+\newblock \emph{J. Appl. Probab.}, 48\penalty0 (4):\penalty0 911--924, 12 2011.
+\newblock \doi{10.1239/jap/1324046009}.
+\newblock URL \url{https://doi.org/10.1239/jap/1324046009}.
+
+\bibitem[Hochreiter and Schmidhuber(1997)]{Hochreiter_1997}
+Sepp Hochreiter and Jurgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock \emph{Neural Computation}, 1997.
+
+\bibitem[Kanungo et~al.(2002)Kanungo, Mount, Netanyahu, Piatko, Silverman, and
+  Wu]{Kanungo_2002}
+T.~Kanungo, D.~M. Mount, N.~S. Netanyahu, C.~D. Piatko, R.~Silverman, and A.~Y.
+  Wu.
+\newblock An efficient k-means clustering algorithm: analysis and
+  implementation.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+  Intelligence}, 24\penalty0 (7):\penalty0 881--892, July 2002.
+\newblock ISSN 0162-8828.
+\newblock \doi{10.1109/TPAMI.2002.1017616}.
+
+\bibitem[Kearns et~al.(1997)Kearns, Mansour, and Ng]{Kearns_2013}
+Michael Kearns, Yishay Mansour, and Andrew~Y. Ng.
+\newblock An information-theoretic analysis of hard and soft assignment methods
+  for clustering.
+\newblock In \emph{UAI}, pages 282--293. Morgan Kaufmann, 1997.
+
+\bibitem[Khreich et~al.(2010)Khreich, Granger, Miri, and
+  Sabourin]{KHREICH_2010}
+Wael Khreich, Eric Granger, Ali Miri, and Robert Sabourin.
+\newblock On the memory complexity of the forward–backward algorithm.
+\newblock \emph{Pattern Recognition Letters}, 31\penalty0 (2):\penalty0 91 --
+  99, 2010.
+\newblock ISSN 0167-8655.
+\newblock \doi{https://doi.org/10.1016/j.patrec.2009.09.023}.
+\newblock URL
+  \url{http://www.sciencedirect.com/science/article/pii/S0167865509002578}.
+
+\bibitem[Kitagawa(1987)]{Kitagawa_1987}
+Genshiro Kitagawa.
+\newblock Non-gaussian state-space modeling of nonstationary time series.
+\newblock \emph{Journal of the American Statistical Association}, 82\penalty0
+  (400):\penalty0 1032--1041, 1987.
+\newblock ISSN 01621459.
+\newblock URL \url{http://www.jstor.org/stable/2289375}.
+
+\bibitem[Krishnamurthy et~al.(2018)Krishnamurthy, Leoff, and
+  Sass]{Krishnamurthy_2016}
+Vikram Krishnamurthy, Elisabeth Leoff, and Jörn Sass.
+\newblock Filterbased stochastic volatility in continuous-time hidden markov
+  models.
+\newblock \emph{Econometrics and Statistics}, 6:\penalty0 1 -- 21, 2018.
+\newblock ISSN 2452-3062.
+\newblock \doi{https://doi.org/10.1016/j.ecosta.2016.10.007}.
+\newblock URL
+  \url{http://www.sciencedirect.com/science/article/pii/S2452306216300144}.
+\newblock STATISTICS OF EXTREMES AND APPLICATIONS.
+
+\bibitem[Kuang et~al.(2016)Kuang, Thomson, Caldwell, Peissig, Stewart, and
+  Page]{Kuang_2016}
+Zhaobin Kuang, James Thomson, Michael Caldwell, Peggy Peissig, Ron Stewart, and
+  David Page.
+\newblock Baseline regularization for computational drug repositioning with
+  longitudinal observational data.
+\newblock In \emph{Proceedings of the Twenty-Fifth International Joint
+  Conference on Artificial Intelligence}, IJCAI'16, pages 2521--2528. AAAI
+  Press, 2016.
+\newblock ISBN 978-1-57735-770-4.
+\newblock URL \url{http://dl.acm.org/citation.cfm?id=3060832.3060974}.
+
+\bibitem[Kuang et~al.(2017)Kuang, Peissig, Costa, Maclin, and Page]{Kuang_2017}
+Zhaobin Kuang, Peggy Peissig, Vitor~Santos Costa, Richard Maclin, and David
+  Page.
+\newblock Pharmacovigilance via baseline regularization with large-scale
+  longitudinal observational data.
+\newblock \emph{KDD : proceedings. International Conference on Knowledge
+  Discovery \& Data Mining}, 2017.
+\newblock \doi{10.1145/3097983.3097998}.
+
+\bibitem[Larsen et~al.(2009)Larsen, Smastuen, Johannesen, Langmark, Parkin,
+  Bray, and Moller]{Larsen_2009}
+I.~K. Larsen, M.~Smastuen, T.~B. Johannesen, F.~Langmark, D.~M. Parkin,
+  F.~Bray, and B.~Moller.
+\newblock Data quality at the cancer registry of norway: an overview of
+  comparability, completeness, validity and timeliness.
+\newblock \emph{Eur J Cancer}, 45\penalty0 (7):\penalty0 1218--31, 2009.
+\newblock ISSN 1879-0852 (Electronic).
+\newblock URL
+  \url{http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Retrieve&db=PubMed&dopt=Citation&list_uids=19091545}.
+
+\bibitem[Leinonen et~al.(2018)Leinonen, Hansen, Skare, Skaaret, Silva,
+  Johannesen, and Nygard]{Leinonen_2018}
+M.~K. Leinonen, S.~A. Hansen, G.~B. Skare, I.~B. Skaaret, M.~Silva, T.~B.
+  Johannesen, and M.~Nygard.
+\newblock Low proportion of unreported cervical treatments in the cancer
+  registry of norway between 1998 and 2013.
+\newblock \emph{Acta Oncol}, 57\penalty0 (12):\penalty0 1663--1670, 2018.
+\newblock ISSN 1651-226X (Electronic) 0284-186X (Linking).
+\newblock \doi{10.1080/0284186X.2018.1497296}.
+\newblock URL \url{https://www.ncbi.nlm.nih.gov/pubmed/30169991}.
+
+\bibitem[Liu and Nocedal(1989)]{Liu_1989}
+Dong~C. Liu and Jorge Nocedal.
+\newblock On the limited memory bfgs method for large scale optimization.
+\newblock \emph{Math. Program.}, 45\penalty0 (1-3):\penalty0 503--528, August
+  1989.
+\newblock ISSN 0025-5610.
+\newblock \doi{10.1007/BF01589116}.
+\newblock URL \url{https://doi.org/10.1007/BF01589116}.
+
+\bibitem[Liu et~al.(2013)Liu, Ishikawa, Chen, Wollstein, S., and
+  Rehg]{Liu_2013}
+Yu-Ying Liu, Hiroshi Ishikawa, Mei Chen, Gadi Wollstein, Schuman~Joel S., and
+  James~M. Rehg.
+\newblock Longitudinal modeling of glaucoma progression us-ing 2-dimensional
+  continuous-time hidden markov model.
+\newblock \emph{Med Image Comput Assist Interv.}, 2013.
+
+\bibitem[Liu et~al.(2015)Liu, Li, Li, Song, and Rehg]{Liu_2015}
+Yu-Ying Liu, Shuang Li, Fuxin Li, Le~Song, and James~M Rehg.
+\newblock Efficient learning of continuous-time hidden markov models for
+  disease progression.
+\newblock In C.~Cortes, N.~D. Lawrence, D.~D. Lee, M.~Sugiyama, and R.~Garnett,
+  editors, \emph{Advances in Neural Information Processing Systems 28}, pages
+  3600--3608. Curran Associates, Inc., 2015.
+
+\bibitem[Loan(1978)]{Loan_1978}
+C.~Van Loan.
+\newblock Computing integrals involving the matrix exponential.
+\newblock \emph{IEEE Transactions on Automatic Control}, 23\penalty0
+  (3):\penalty0 395--404, June 1978.
+\newblock ISSN 0018-9286.
+\newblock \doi{10.1109/TAC.1978.1101743}.
+
+\bibitem[Lu(2017)]{Lu_2017}
+Shaochuan Lu.
+\newblock A continuous-time hmm approach to modeling the magnitude-frequency
+  distribution of earthquakes.
+\newblock \emph{Journal of Applied Statistics}, 44\penalty0 (1):\penalty0
+  71--88, 2017.
+\newblock \doi{10.1080/02664763.2016.1161736}.
+\newblock URL \url{https://doi.org/10.1080/02664763.2016.1161736}.
+
+\bibitem[Maclaurin(2016)]{Maclaurin_2016}
+Dougal Maclaurin.
+\newblock \emph{Modeling, Inference and Optimization with Compposable
+  Differentiable Procedures}.
+\newblock {PhD} dissertation, Harvard University, 2016.
+
+\bibitem[{Merity} et~al.(2017){Merity}, {Shirish Keskar}, and
+  {Socher}]{Stephen_2017}
+Stephen {Merity}, Nitish {Shirish Keskar}, and Richard {Socher}.
+\newblock {Regularizing and Optimizing LSTM Language Models}.
+\newblock \emph{arXiv e-prints}, art. arXiv:1708.02182, Aug 2017.
+
+\bibitem[Metzner et~al.(2008)Metzner, Horenko, and Sch{\"u}tte]{Metzner_2007}
+Philipp Metzner, Illia Horenko, and Christof Sch{\"u}tte.
+\newblock Generator estimation of markov jump processes based on incomplete
+  observations nonequidistant in time.
+\newblock \emph{Physical review. E, Statistical, nonlinear, and soft matter
+  physics}, 76:\penalty0 066702, 01 2008.
+
+\bibitem[Myers et~al.(2000)Myers, McCrory, Nanda, Bastian, and
+  Matchar]{Myers_2000}
+Evan~R. Myers, Douglas~C. McCrory, Kavita Nanda, Lori Bastian, and David~B.
+  Matchar.
+\newblock {Mathematical Model for the Natural History of Human Papillomavirus
+  Infection and Cervical Carcinogenesis}.
+\newblock \emph{American Journal of Epidemiology}, 151\penalty0 (12):\penalty0
+  1158--1171, 06 2000.
+\newblock ISSN 0002-9262.
+\newblock \doi{10.1093/oxfordjournals.aje.a010166}.
+\newblock URL \url{https://dx.doi.org/10.1093/oxfordjournals.aje.a010166}.
+
+\bibitem[Simpson et~al.(2013)Simpson, Madigan, Zorych, Schuemie, Ryan, and
+  Suchard]{Simpson_2013}
+Shawn~E. Simpson, David Madigan, Ivan Zorych, Martijn~J. Schuemie, Patrick~B.
+  Ryan, and Marc~A. Suchard.
+\newblock Multiple self-controlled case series for large-scale longitudinal
+  observational databases.
+\newblock \emph{Biometrics}, 69\penalty0 (4):\penalty0 893--902, 2013.
+\newblock \doi{10.1111/biom.12078}.
+\newblock URL \url{https://onlinelibrary.wiley.com/doi/abs/10.1111/biom.12078}.
+
+\bibitem[Sonnenberg and Robert(1993)]{Sonnernberg_1993}
+Frank~A. Sonnenberg and Beck~J. Robert.
+\newblock Markov models in medical decision making: A practical guide.
+\newblock \emph{Med Decis Making}, 13:\penalty0 322--338, 1993.
+
+\bibitem[Soper et~al.(2018)Soper, Meng, Nygard, Nygard, and
+  Lee]{Soper_et_al_2018}
+Braden Soper, Rui Meng, Jan~F. Nygard, Mari Nygard, and Herbert Lee.
+\newblock An hpc application to population-level cancer screening data.
+\newblock Abstract from HPC Applications in Precision Medicine, Frankfurt,
+  Germany, June 2018.
+
+\bibitem[Subakan et~al.(2014)Subakan, Traa, and Smaragdis]{Cem_2014}
+Cem Subakan, Johannes Traa, and Paris Smaragdis.
+\newblock Spectral learning of mixture of hidden markov models.
+\newblock In Z.~Ghahramani, M.~Welling, C.~Cortes, N.~D. Lawrence, and K.~Q.
+  Weinberger, editors, \emph{Advances in Neural Information Processing Systems
+  27}, pages 2249--2257. Curran Associates, Inc., 2014.
+\newblock URL
+  \url{http://papers.nips.cc/paper/5518-spectral-learning-of-mixture-of-hidden-markov-models.pdf}.
+
+\bibitem[Titman and Sharples(2008)]{titman_general_2008}
+Andrew~C. Titman and Linda~D. Sharples.
+\newblock A general goodness-of-fit test for {Markov} and hidden {Markov}
+  models.
+\newblock \emph{Statistics in Medicine}, 27\penalty0 (12):\penalty0 2177--2195,
+  May 2008.
+\newblock ISSN 02776715, 10970258.
+\newblock \doi{10.1002/sim.3033}.
+\newblock URL \url{http://doi.wiley.com/10.1002/sim.3033}.
+
+\bibitem[Ursin et~al.(2017)Ursin, Sen, Mottu, and Nygard]{Ursin_2017}
+G.~Ursin, S.~Sen, J.~M. Mottu, and M.~Nygard.
+\newblock Protecting privacy in large datasets-first we assess the risk; then
+  we fuzzy the data.
+\newblock \emph{Cancer Epidemiol Biomarkers Prev}, 26\penalty0 (8):\penalty0
+  1219--1224, 2017.
+\newblock ISSN 1538-7755 (Electronic) 1055-9965 (Linking).
+\newblock \doi{10.1158/1055-9965.EPI-17-0172}.
+\newblock URL \url{https://www.ncbi.nlm.nih.gov/pubmed/28754793}.
+
+\bibitem[Wang et~al.(2014)Wang, Sontag, and Wang]{Wang_2014}
+Xiang Wang, David Sontag, and Fei Wang.
+\newblock Unsupervised learning of disease progression models.
+\newblock In \emph{Proceedings of the 20th ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining}, KDD '14, pages 85--94, New York, NY,
+  USA, 2014. ACM.
+\newblock ISBN 978-1-4503-2956-9.
+\newblock \doi{10.1145/2623330.2623754}.
+\newblock URL \url{http://doi.acm.org/10.1145/2623330.2623754}.
+
+\bibitem[Wei et~al.(2002)Wei, Wang, and Towsley]{Wei_2002}
+Wei Wei, Bing Wang, and Don Towsley.
+\newblock Continuous-time hidden markov models for network performance
+  evaluation.
+\newblock \emph{Performance Evaluation}, 49\penalty0 (1):\penalty0 129 -- 146,
+  2002.
+\newblock ISSN 0166-5316.
+\newblock \doi{https://doi.org/10.1016/S0166-5316(02)00122-0}.
+\newblock URL
+  \url{http://www.sciencedirect.com/science/article/pii/S0166531602001220}.
+\newblock Performance 2002.
+
+\bibitem[Yen et~al.(2010)Yen, Chen, Duffy, and Chen]{Amy2010}
+Amy~MF Yen, Tony~HH Chen, Stephen~W Duffy, and Chih-Dao Chen.
+\newblock Incorporating frailty in a multi-state model: application to disease
+  natural history modelling of adenoma-carcinoma in the large bowel.
+\newblock \emph{Statistical Methods in Medical Research}, 19\penalty0
+  (5):\penalty0 529--546, 2010.
+\newblock \doi{10.1177/0962280209359862}.
+\newblock URL \url{https://doi.org/10.1177/0962280209359862}.
+\newblock PMID: 20488838.
+
+\bibitem[Zeifman and Isaacson(1994)]{Zeifman_1994}
+A.I. Zeifman and Dean~L. Isaacson.
+\newblock On strong ergodicity for nonhomogeneous continuous-time markov
+  chains.
+\newblock \emph{Stochastic Processes and their Applications}, 50\penalty0
+  (2):\penalty0 263 -- 273, 1994.
+\newblock ISSN 0304-4149.
+\newblock \doi{https://doi.org/10.1016/0304-4149(94)90123-6}.
+\newblock URL
+  \url{http://www.sciencedirect.com/science/article/pii/0304414994901236}.
+
+\bibitem[{Zhang} et~al.(2016){Zhang}, {Chao}, {Sha}, and {Grauman}]{Zhang_2016}
+Ke~{Zhang}, Wei-Lun {Chao}, Fei {Sha}, and Kristen {Grauman}.
+\newblock {Video Summarization with Long Short-term Memory}.
+\newblock \emph{arXiv e-prints}, art. arXiv:1605.08110, May 2016.
+
+\end{thebibliography}
