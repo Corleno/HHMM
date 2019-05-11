@@ -1,0 +1,9 @@
+#!/bin/bash
+#SBATCH -t 23:59:59
+#SBATCH -p pbatch
+#SBATCH -N 100
+#SBATCH -n 2400
+
+source ~/.bashrc
+
+srun python2 ../EM_exact_death_times_hierarchical_shared.py --age_inv inv4_optim --autograd_optim --Z_prior 0.2 --bootstrap_seed 2

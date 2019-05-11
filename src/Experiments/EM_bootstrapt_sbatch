@@ -1,0 +1,7 @@
+#!/bin/bash
+#SBATCH -t 23:59:59
+#SBATCH -p pbatch
+
+source ~/.bashrc
+
+srun -N 100 -t 23:59:59 -p pbatch -n 2400 python EM_exact_death_times_hierarchical_shared.py --autograd_optim --Z_prior 0.2 --bootstrap_seed 4"

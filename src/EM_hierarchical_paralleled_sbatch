@@ -1,0 +1,9 @@
+#!/bin/bash
+#SBATCH -t 23:59:59
+#SBATCH -p pbatch
+#SBATCH -N 35
+#SBATCH -n 800
+
+source ~/.bashrc
+
+srun python EM_hierarchical_paralleled.py --autograd_optim --Z_prior 0.2

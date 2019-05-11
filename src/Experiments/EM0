@@ -1,0 +1,12 @@
+#!/bin/python3
+# Generate multiple seeds. Here, we generate 10 seeds
+import numpy as np
+import os
+np.random.seed(22)
+n = 10
+N = 100
+n_processes_per_node = 24
+n_processes = N*n_processes_per_node
+seeds = np.random.choice(1000, n)
+for i in range(n):
+	os.system("srun -N {} -t 24:00:00 -p pbatch -n {} python EM_exact_death_times_hierarchical_shared.py --autograd_optim --Z_prior 0.2 --bootstrap_seed {}".format(N, n_processes, seeds[i]))

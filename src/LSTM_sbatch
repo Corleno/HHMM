@@ -1,0 +1,9 @@
+#!/bin/bash
+#SBATCH -t 23:59:59
+#SBATCH -p pbatch
+#SBATCH -N 1
+#SBATCH -n 1
+
+source ~/.bashrc
+
+srun python3 LSTM.py

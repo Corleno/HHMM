@@ -1,0 +1,17 @@
+INFO:root:Initialization complete
+INFO:root:Initialization complete
+INFO:root:Procedure 1 complete
+INFO:root:Procedure 2 complete
+INFO:root:Start to plot Kaplan Meier curve for version 0
+INFO:root:{}th starts
+INFO:root:Initialization complete
+INFO:root:Procedure 1 complete
+INFO:root:Procedure 2 complete
+INFO:root:Start to plot Kaplan Meier curve for version 0
+INFO:root:0th starts
+INFO:root:0th simulation costs 59.6413099766s
+INFO:root:1th starts
+INFO:root:1th simulation costs 59.3712179661s
+INFO:root:2th starts
+INFO:root:2th simulation costs 55.9540221691s
+INFO:root:3th starts
