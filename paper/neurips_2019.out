@@ -3,23 +3,21 @@
 \BOOKMARK [1][-]{section.3}{Model}{}% 3
 \BOOKMARK [2][-]{subsection.3.1}{Variables}{section.3}% 4
 \BOOKMARK [2][-]{subsection.3.2}{Model of Disease Progression}{section.3}% 5
-\BOOKMARK [3][-]{subsubsection.3.2.1}{Continuous-time, Homogeneous Hidden Markov Model}{subsection.3.2}% 6
-\BOOKMARK [3][-]{subsubsection.3.2.2}{Continuous-time, Inhomogeneous Hidden Markov Model}{subsection.3.2}% 7
-\BOOKMARK [2][-]{subsection.3.3}{Hierarchical Inhomogeneous Hidden Markov Model}{section.3}% 8
+\BOOKMARK [3][-]{subsubsection.3.2.1}{Homogeneous Markov Model}{subsection.3.2}% 6
+\BOOKMARK [3][-]{subsubsection.3.2.2}{Inhomogeneous Markov Model}{subsection.3.2}% 7
+\BOOKMARK [2][-]{subsection.3.3}{Hierarchical Model}{section.3}% 8
 \BOOKMARK [1][-]{section.4}{Inference}{}% 9
-\BOOKMARK [2][-]{subsection.4.1}{Scalable EM for HIHMMs}{section.4}% 10
-\BOOKMARK [2][-]{subsection.4.2}{Scalable Computation}{section.4}% 11
-\BOOKMARK [1][-]{section.5}{Experimental results}{}% 12
-\BOOKMARK [2][-]{subsection.5.1}{Data and Model Description}{section.5}% 13
-\BOOKMARK [2][-]{subsection.5.2}{Inference with Treatment Information}{section.5}% 14
-\BOOKMARK [2][-]{subsection.5.3}{Hyper-parameter settings}{section.5}% 15
-\BOOKMARK [2][-]{subsection.5.4}{Model Comparison}{section.5}% 16
-\BOOKMARK [2][-]{subsection.5.5}{Model Validation}{section.5}% 17
-\BOOKMARK [3][-]{subsubsection.5.5.1}{Parameter Estimation}{subsection.5.5}% 18
-\BOOKMARK [3][-]{subsubsection.5.5.2}{Model Validation}{subsection.5.5}% 19
-\BOOKMARK [1][-]{section.6}{Discussion and Conclusion}{}% 20
-\BOOKMARK [1][-]{section.7}{Supplemental Materials for Reproducibility}{}% 21
-\BOOKMARK [2][-]{subsection.7.1}{Details of Age Segmentation}{section.7}% 22
-\BOOKMARK [2][-]{subsection.7.2}{Details of Parameter Transformation in Limited-Memory BFGS Optimization}{section.7}% 23
-\BOOKMARK [2][-]{subsection.7.3}{Details of Learning Settings}{section.7}% 24
-\BOOKMARK [2][-]{subsection.7.4}{Details of Simulations of Kaplan-Meier Curves}{section.7}% 25
+\BOOKMARK [1][-]{section.5}{Experimental results}{}% 10
+\BOOKMARK [2][-]{subsection.5.1}{Data and Model Description}{section.5}% 11
+\BOOKMARK [2][-]{subsection.5.2}{Model Comparison}{section.5}% 12
+\BOOKMARK [2][-]{subsection.5.3}{Model Validation}{section.5}% 13
+\BOOKMARK [3][-]{subsubsection.5.3.1}{Parameter Estimation}{subsection.5.3}% 14
+\BOOKMARK [3][-]{subsubsection.5.3.2}{Model Validation}{subsection.5.3}% 15
+\BOOKMARK [1][-]{section.6}{Discussion and Conclusion}{}% 16
+\BOOKMARK [1][-]{section.7}{Supplemental Materials for Reproducibility}{}% 17
+\BOOKMARK [2][-]{subsection.7.1}{Treatment Modeling}{section.7}% 18
+\BOOKMARK [2][-]{subsection.7.2}{Age Segmentation}{section.7}% 19
+\BOOKMARK [2][-]{subsection.7.3}{Parameter Transformation in Limited-Memory BFGS Optimization}{section.7}% 20
+\BOOKMARK [2][-]{subsection.7.4}{Optimization Settings}{section.7}% 21
+\BOOKMARK [2][-]{subsection.7.5}{Parameter Estimation}{section.7}% 22
+\BOOKMARK [2][-]{subsection.7.6}{Simulations of Kaplan-Meier Curves}{section.7}% 23

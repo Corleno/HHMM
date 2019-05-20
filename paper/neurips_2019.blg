@@ -12,45 +12,45 @@ while executing---line 1429 of file plainnat.bst
 Name 1 in "Bartolomeo, N, and Trerotoli, P. and Serio, G." has a comma at the end for entry Bartolonemo_2011
 while executing---line 1429 of file plainnat.bst
 Warning--empty publisher in Cox_1965
-You've used 45 entries,
+You've used 35 entries,
             2773 wiz_defined-function locations,
-            993 strings with 16748 characters,
-and the built_in function-call counts, 25190 in all, are:
-= -- 2290
-> -- 1644
-< -- 29
-+ -- 548
-- -- 503
-* -- 2245
-:= -- 3915
-add.period$ -- 203
-call.type$ -- 45
-change.case$ -- 295
-chr.to.int$ -- 45
-cite$ -- 91
-duplicate$ -- 1041
-empty$ -- 1839
-format.name$ -- 566
-if$ -- 5300
+            906 strings with 14256 characters,
+and the built_in function-call counts, 19935 in all, are:
+= -- 1804
+> -- 1317
+< -- 23
++ -- 439
+- -- 404
+* -- 1775
+:= -- 3104
+add.period$ -- 160
+call.type$ -- 35
+change.case$ -- 232
+chr.to.int$ -- 35
+cite$ -- 71
+duplicate$ -- 827
+empty$ -- 1442
+format.name$ -- 449
+if$ -- 4197
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 44
-newline$ -- 293
-num.names$ -- 188
-pop$ -- 510
+missing$ -- 35
+newline$ -- 231
+num.names$ -- 148
+pop$ -- 405
 preamble$ -- 1
-purify$ -- 251
+purify$ -- 198
 quote$ -- 0
-skip$ -- 807
+skip$ -- 642
 stack$ -- 0
-substring$ -- 917
-swap$ -- 159
-text.length$ -- 16
+substring$ -- 718
+swap$ -- 131
+text.length$ -- 14
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 490
+type$ -- 380
 warning$ -- 1
-while$ -- 193
+while$ -- 150
 width$ -- 0
-write$ -- 719
+write$ -- 565
 (There were 4 error messages)

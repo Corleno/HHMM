@@ -1,15 +1,9 @@
-\begin{thebibliography}{45}
+\begin{thebibliography}{35}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
-
-\bibitem[{Backurs} and {Tzamos}(2016)]{Arturs_2016}
-Arturs {Backurs} and Christos {Tzamos}.
-\newblock {Improving Viterbi is Hard: Better Runtimes Imply Faster Clique
-  Algorithms}.
-\newblock \emph{arXiv e-prints}, art. arXiv:1607.04229, Jul 2016.
 
 \bibitem[Bao et~al.(2017)Bao, Kuang, Peissig, Page, and Willett]{Bao_2017}
 Yujia Bao, Zhaobin Kuang, Peggy Peissig, David Page, and Rebecca Willett.
@@ -29,26 +23,10 @@ N~Bartolomeo, P.~Trerotoli, and G.~Serio.
   markov model.
 \newblock \emph{BMC Med Research Method}, 11, 2011.
 
-\bibitem[Baydin et~al.(2018)Baydin, Pearlmutter, Andreyevich~Radul, and
-  Siskind]{Baydin_2018}
-Atilim~Gunes Baydin, Barak Pearlmutter, Alexey Andreyevich~Radul, and Jeffrey
-  Siskind.
-\newblock Automatic differentiation in machine learning: A survey.
-\newblock \emph{Journal of Machine Learning Research}, 18:\penalty0 1--43, 04
-  2018.
-
 \bibitem[Beal et~al.(2002)Beal, Ghahramani, and Rasmussen]{Beal02}
 Matthew~J. Beal, Zoubin Ghahramani, and Carl~E. Rasmussen.
 \newblock The infinite hidden markov model.
 \newblock In \emph{Machine Learning}, pages 29--245. MIT Press, 2002.
-
-\bibitem[Bladt and S{\o}rensen(2005)]{Mogens_2005}
-Mogens Bladt and Michael S{\o}rensen.
-\newblock Statistical inference for discretely observed markov jump processes.
-\newblock \emph{Journal of the Royal Statistical Society. Series B (Statistical
-  Methodology)}, 67\penalty0 (3):\penalty0 395--410, 2005.
-\newblock ISSN 13697412, 14679868.
-\newblock URL \url{http://www.jstor.org/stable/3647667}.
 
 \bibitem[Bureau et~al.(2003)Bureau, Shiboski, and Hughes]{Bureau_2003}
 Alexandre Bureau, Stephen Shiboski, and James~P. Hughes.
@@ -103,6 +81,14 @@ Chris {Dyer}, Miguel {Ballesteros}, Wang {Ling}, Austin {Matthews}, and Noah~A.
   Memory}.
 \newblock \emph{arXiv e-prints}, art. arXiv:1505.08075, May 2015.
 
+\bibitem[Forney(1973)]{Forney_1973}
+G.~D. Forney.
+\newblock The viterbi algorithm.
+\newblock \emph{Proceedings of the IEEE}, 61\penalty0 (3):\penalty0 268--278,
+  March 1973.
+\newblock ISSN 0018-9219.
+\newblock \doi{10.1109/PROC.1973.9030}.
+
 \bibitem[Gael et~al.(2009)Gael, Teh, and Ghahramani]{Gael_2008}
 Jurgen~V. Gael, Yee~W. Teh, and Zoubin Ghahramani.
 \newblock The infinite factorial hidden markov model.
@@ -112,46 +98,10 @@ Jurgen~V. Gael, Yee~W. Teh, and Zoubin Ghahramani.
 \newblock URL
   \url{http://papers.nips.cc/paper/3518-the-infinite-factorial-hidden-markov-model.pdf}.
 
-\bibitem[Hobolth and Jensen(2011)]{Hobolth_2011}
-Asger Hobolth and Jens~Ledet Jensen.
-\newblock Summary statistics for endpoint-conditioned continuous-time markov
-  chains.
-\newblock \emph{J. Appl. Probab.}, 48\penalty0 (4):\penalty0 911--924, 12 2011.
-\newblock \doi{10.1239/jap/1324046009}.
-\newblock URL \url{https://doi.org/10.1239/jap/1324046009}.
-
 \bibitem[Hochreiter and Schmidhuber(1997)]{Hochreiter_1997}
 Sepp Hochreiter and Jurgen Schmidhuber.
 \newblock Long short-term memory.
 \newblock \emph{Neural Computation}, 1997.
-
-\bibitem[Kanungo et~al.(2002)Kanungo, Mount, Netanyahu, Piatko, Silverman, and
-  Wu]{Kanungo_2002}
-T.~Kanungo, D.~M. Mount, N.~S. Netanyahu, C.~D. Piatko, R.~Silverman, and A.~Y.
-  Wu.
-\newblock An efficient k-means clustering algorithm: analysis and
-  implementation.
-\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
-  Intelligence}, 24\penalty0 (7):\penalty0 881--892, July 2002.
-\newblock ISSN 0162-8828.
-\newblock \doi{10.1109/TPAMI.2002.1017616}.
-
-\bibitem[Kearns et~al.(1997)Kearns, Mansour, and Ng]{Kearns_2013}
-Michael Kearns, Yishay Mansour, and Andrew~Y. Ng.
-\newblock An information-theoretic analysis of hard and soft assignment methods
-  for clustering.
-\newblock In \emph{UAI}, pages 282--293. Morgan Kaufmann, 1997.
-
-\bibitem[Khreich et~al.(2010)Khreich, Granger, Miri, and
-  Sabourin]{KHREICH_2010}
-Wael Khreich, Eric Granger, Ali Miri, and Robert Sabourin.
-\newblock On the memory complexity of the forward–backward algorithm.
-\newblock \emph{Pattern Recognition Letters}, 31\penalty0 (2):\penalty0 91 --
-  99, 2010.
-\newblock ISSN 0167-8655.
-\newblock \doi{https://doi.org/10.1016/j.patrec.2009.09.023}.
-\newblock URL
-  \url{http://www.sciencedirect.com/science/article/pii/S0167865509002578}.
 
 \bibitem[Kitagawa(1987)]{Kitagawa_1987}
 Genshiro Kitagawa.
@@ -216,15 +166,6 @@ M.~K. Leinonen, S.~A. Hansen, G.~B. Skare, I.~B. Skaaret, M.~Silva, T.~B.
 \newblock \doi{10.1080/0284186X.2018.1497296}.
 \newblock URL \url{https://www.ncbi.nlm.nih.gov/pubmed/30169991}.
 
-\bibitem[Liu and Nocedal(1989)]{Liu_1989}
-Dong~C. Liu and Jorge Nocedal.
-\newblock On the limited memory bfgs method for large scale optimization.
-\newblock \emph{Math. Program.}, 45\penalty0 (1-3):\penalty0 503--528, August
-  1989.
-\newblock ISSN 0025-5610.
-\newblock \doi{10.1007/BF01589116}.
-\newblock URL \url{https://doi.org/10.1007/BF01589116}.
-
 \bibitem[Liu et~al.(2013)Liu, Ishikawa, Chen, Wollstein, S., and
   Rehg]{Liu_2013}
 Yu-Ying Liu, Hiroshi Ishikawa, Mei Chen, Gadi Wollstein, Schuman~Joel S., and
@@ -240,14 +181,6 @@ Yu-Ying Liu, Shuang Li, Fuxin Li, Le~Song, and James~M Rehg.
 \newblock In C.~Cortes, N.~D. Lawrence, D.~D. Lee, M.~Sugiyama, and R.~Garnett,
   editors, \emph{Advances in Neural Information Processing Systems 28}, pages
   3600--3608. Curran Associates, Inc., 2015.
-
-\bibitem[Loan(1978)]{Loan_1978}
-C.~Van Loan.
-\newblock Computing integrals involving the matrix exponential.
-\newblock \emph{IEEE Transactions on Automatic Control}, 23\penalty0
-  (3):\penalty0 395--404, June 1978.
-\newblock ISSN 0018-9286.
-\newblock \doi{10.1109/TAC.1978.1101743}.
 
 \bibitem[Lu(2017)]{Lu_2017}
 Shaochuan Lu.
@@ -269,13 +202,6 @@ Dougal Maclaurin.
 Stephen {Merity}, Nitish {Shirish Keskar}, and Richard {Socher}.
 \newblock {Regularizing and Optimizing LSTM Language Models}.
 \newblock \emph{arXiv e-prints}, art. arXiv:1708.02182, Aug 2017.
-
-\bibitem[Metzner et~al.(2008)Metzner, Horenko, and Sch{\"u}tte]{Metzner_2007}
-Philipp Metzner, Illia Horenko, and Christof Sch{\"u}tte.
-\newblock Generator estimation of markov jump processes based on incomplete
-  observations nonequidistant in time.
-\newblock \emph{Physical review. E, Statistical, nonlinear, and soft matter
-  physics}, 76:\penalty0 066702, 01 2008.
 
 \bibitem[Myers et~al.(2000)Myers, McCrory, Nanda, Bastian, and
   Matchar]{Myers_2000}
@@ -303,13 +229,6 @@ Shawn~E. Simpson, David Madigan, Ivan Zorych, Martijn~J. Schuemie, Patrick~B.
 Frank~A. Sonnenberg and Beck~J. Robert.
 \newblock Markov models in medical decision making: A practical guide.
 \newblock \emph{Med Decis Making}, 13:\penalty0 322--338, 1993.
-
-\bibitem[Soper et~al.(2018)Soper, Meng, Nygard, Nygard, and
-  Lee]{Soper_et_al_2018}
-Braden Soper, Rui Meng, Jan~F. Nygard, Mari Nygard, and Herbert Lee.
-\newblock An hpc application to population-level cancer screening data.
-\newblock Abstract from HPC Applications in Precision Medicine, Frankfurt,
-  Germany, June 2018.
 
 \bibitem[Subakan et~al.(2014)Subakan, Traa, and Smaragdis]{Cem_2014}
 Cem Subakan, Johannes Traa, and Paris Smaragdis.
