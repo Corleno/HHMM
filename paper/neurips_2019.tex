@@ -193,6 +193,7 @@ Specifically, we decompose the joint posterior distribution by $p(z_n, \bm S_n| 
 	\end{align}
 \end{itemize}
 
+The scalable EM with its computational complexity analysis are discussed in Appendix~\ref{sec:scale} in details.
 
 
 \section{Experimental results}
@@ -238,28 +239,28 @@ $p(S^*_{T}|\bm O^*, \hat{\bm \psi}) \sum_{z} p(z^* = z|\bm O^*, \hat{\bm \psi}) 
 0 & \mathrm{otherwise} \\
 \end{cases}$.
 
-As for state of the art recurrent neural network models, each patient's record is modeled as one time-series and the features at each visit includes patient's age, patient's screening result and patient's treatment indicator. Specifically, screening result of patient $n$ at $t$th visiting is $\vec{\bm G_{n,t}}$. And treatment indicator is a binary number, it is equal to 1 if and only if the patient has accepted treatment. LSTM \citep{Cho_2014}, stacked LSTM \citep{Dyer_2015} and GRU \citep{Chung_2014} are implemented for model comparison. As for stacked LSTM, two LSTMs are stacked. We summarize prediction results in Table~\ref{Model_Comparison}. It shows our model outperforms state of the art methods in term of Area Under The Curve(AUC). And HIHMM with prior setting $p = 0.2$ obtains the best prediction performance.
+As for state of the art recurrent neural network models, each patient's record is modeled as one time-series and the features at each visit includes patient's age, patient's screening result and patient's treatment indicator. Specifically, screening result of patient $n$ at $t$th visiting is $\vec{\bm G_{n,t}}$. And treatment indicator is a binary number, it is equal to 1 if and only if the patient has accepted treatment. LSTM \citep{Cho_2014}, stacked LSTM \citep{Dyer_2015} and GRU \citep{Chung_2014} are implemented for model comparison. As for stacked LSTM, two LSTMs are stacked. We summarize prediction results in Table~\ref{Model_Comparison}. It shows our model outperforms state of the art methods in term of Area Under the Curve(AUC), F1 value(F1), Average Precision(AP), Precision(P) and Recall(R). HIHMM with prior setting $p = 0.2$ obtains the best prediction performance in AUC, F1, AP, P and R.
 
 \begin{table}[ht!]
 	\centering
-	\caption{Model prediction for the status of the last visit in terms of Accuracy (ACC), Area Under The Curve(AUC), True Positive (TP), False Positive (FP), True Negative (TN) and False Negative (FN).}
+	\caption{Model prediction for the status of the last visit in terms of Accuracy (ACC), Area Under The Curve(AUC), F1, Average Precision (AP), Precision (P), Recall (R).}
 	\begin{tabular}{|c|c|c|c|c|c|c|c|}
 		\hline
-		Method & Prior & ACC & AUC & TP & FP & TN & FN \\
+		Method & Prior & ACC & AUC & F1 & AP & P & R \\
 		\hline
-		LSTM &  & 0.9920 & 0.85 & 43 & 147 & 19779 & 13 \\
+		LSTM &  & 0.9920 & 0.8506 & 0.3496 & 0.1811 & \textbf{0.7679} & 0.2263 \\
 		\hline
-		stacked LSTM &  & 0.9914 & 0.86 & 39 & 151 & 19788 & 22 \\
+		stacked LSTM &  & 0.9914 & 0.8575 & 0.3108 & 0.1388 & 0.6393 & 0.2053 \\
 		\hline
-		GRU &  & 0.9922 & 0.85 & 59 & 131 & 19786 & 24 \\
+		GRU &  & \textbf{0.9922} & 0.8490 & 0.4322 & 0.2273 & 0.7108 & 0.3105 \\
 		\hline
-		HIHMM & 0.2 & 0.9916 & 0.9098 & 73 & 117 & 19759 & 51 \\
+		HIHMM & 0.2 & 0.9918 & \textbf{0.9087} & \textbf{0.4762} & \textbf{0.2426} & 0.6000 & \textbf{0.3947} \\
 		\hline
-		HIHMM & 0.3 & 0.9916 & 0.9095 & 56 & 134 & 19776 & 34 \\
+		HIHMM & 0.3 & 0.9915 & 0.9081 & 0.3929 & 0.1837 & 0.6111 & 0.2895 \\
 		\hline
-		HIHMM & 0.4 & 0.9918 & 0.8997 & 53 & 137 & 19782 & 28 \\
+		HIHMM & 0.4 & 0.9916 & 0.9013 & 0.3883 & 0.1850 & 0.6386 & 0.2789 \\
 		\hline
-		HIHMM & 0.5 & 0.9917 & 0.8995 & 53 & 137 & 19781 & 29 \\
+		HIHMM & 0.5 & 0.9918 & 0.8985 & 0.3971 & 0.1940 & 0.6585 & 0.2842 \\
 		\hline
 	\end{tabular}
 	\label{Model_Comparison}
@@ -322,6 +323,19 @@ In summary, this paper has made the following contributions:
 
 \newpage
 \section{Supplemental Materials for Reproducibility}
+\subsection{Scalable Computation} \label{sec:scale}
+Since population screening datasets can contain millions of records. direct inference may be prohibitively expensive and more scalable approaches are necessary. We scale our EM algorithm by parallelizing the inference across observations using $\tilde{N}$ clusters, $\{C_n\}_{n=1}^{\tilde{N}}$, in three parts. We first compute the conditional posterior distribution of $z_n$ in each cluster using (\ref{Pos_I}). The time complexity for each cluster is $O(|C_n|ZM^2T)$ \citep{KHREICH_2010}. We then compute the optimal state sequences in each cluster $C_n$ using (\ref{Pos_S}) with the same time complexity $O(|C_n|ZM^2T)$ \citep{Arturs_2016}. Finally, we compute the gradients in each cluster then reduce all local gradients to global gradients for the optimization in the M-step. In detail the EMCLL is rewritten as
+\begin{eqnarray*}
+	& \sum_{n=1}^{N}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}) \\ 
+	= & \sum_{\tilde{n}=1}^{\tilde{N}}\sum_{n\in C_{\tilde{n}}}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}).
+\end{eqnarray*} 
+Taking gradient on both sizes, we have
+\begin{eqnarray*}
+	& \frac{\partial}{\partial \bm{\psi}}\sum_{n=1}^{N}E_{z_n,\bm s_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}) \\
+	= & \sum_{\tilde{n}=1}^{\tilde{N}} \frac{\partial}{\partial \bm{\psi}}\sum_{n\in C_{\tilde{n}}}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}).
+\end{eqnarray*}
+Automatic differentiation (AD) \cite{Baydin_2018} is utilized to compute the gradients in each cluster. Summing over all clusters, we get the gradient of the EMCLL. Using this gradient we adapt the Limited-Memory BFGS \cite{Liu_1989} algorithm to estimate $\bm \psi$. The complexity of each cluster in optimization is intractable, but it increase inference speed around $\tilde{N}$ times.
+
 \subsection{Treatment Modeling}\label{sec:treatment}
 Because of treatments, the inference has three modifications for FFBS, Viterbi and EMCLL. Without loss of generality we suppose one woman has $m$ treatments indexed by $\{r_1, \ldots, r_m\}$. Then the observation sequence $\bm O$ is partitioned as 
 $$\{\bm O_1, \ldots, \bm O_{r_1}\}, \ldots, \{\bm O_{r_m}, \ldots \bm O_T, \bm O_{c} \}.$$

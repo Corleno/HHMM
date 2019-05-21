@@ -263,6 +263,7 @@ Considering their advantages, we use soft assignment for $p(z_n| -)$ and hard as
 	\end{align}
 \end{itemize}
 
+
 \subsection{Scalable Computation}
 Population screening datasets can contain millions of records.  In this case direct inference may be  prohibitively expensive and more scalable approaches are necessary. We scale our EM algorithm by parallelizing the inference across observations using $\tilde{N}$ clusters, $\{C_n\}_{n=1}^{\tilde{N}}$, in three parts. We first compute the conditional posterior distribution of $z_n$ in each cluster using (\ref{Pos_I}). The time complexity for each cluster is $O(|C_n|ZM^2T)$ \citep{KHREICH_2010}. We then compute the optimal state sequences in each cluster $C_n$ using (\ref{Pos_S}) with the same time complexity $O(|C_n|ZM^2T)$ \citep{Arturs_2016}. Finally, we compute the gradients in each cluster then reduce all local gradients to global gradients for the optimization in the M-step. In detail the EMCLL is rewritten as
 \begin{eqnarray*}

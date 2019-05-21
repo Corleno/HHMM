@@ -1,9 +1,15 @@
-\begin{thebibliography}{35}
+\begin{thebibliography}{36}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[{Backurs} and {Tzamos}(2016)]{Arturs_2016}
+Arturs {Backurs} and Christos {Tzamos}.
+\newblock {Improving Viterbi is Hard: Better Runtimes Imply Faster Clique
+  Algorithms}.
+\newblock \emph{arXiv e-prints}, art. arXiv:1607.04229, Jul 2016.
 
 \bibitem[Bao et~al.(2017)Bao, Kuang, Peissig, Page, and Willett]{Bao_2017}
 Yujia Bao, Zhaobin Kuang, Peggy Peissig, David Page, and Rebecca Willett.
@@ -22,6 +28,14 @@ N~Bartolomeo, P.~Trerotoli, and G.~Serio.
 \newblock Progression of liver cirrhosis to hcc: an application of hidden
   markov model.
 \newblock \emph{BMC Med Research Method}, 11, 2011.
+
+\bibitem[Baydin et~al.(2018)Baydin, Pearlmutter, Andreyevich~Radul, and
+  Siskind]{Baydin_2018}
+Atilim~Gunes Baydin, Barak Pearlmutter, Alexey Andreyevich~Radul, and Jeffrey
+  Siskind.
+\newblock Automatic differentiation in machine learning: A survey.
+\newblock \emph{Journal of Machine Learning Research}, 18:\penalty0 1--43, 04
+  2018.
 
 \bibitem[Beal et~al.(2002)Beal, Ghahramani, and Rasmussen]{Beal02}
 Matthew~J. Beal, Zoubin Ghahramani, and Carl~E. Rasmussen.
@@ -103,6 +117,17 @@ Sepp Hochreiter and Jurgen Schmidhuber.
 \newblock Long short-term memory.
 \newblock \emph{Neural Computation}, 1997.
 
+\bibitem[Khreich et~al.(2010)Khreich, Granger, Miri, and
+  Sabourin]{KHREICH_2010}
+Wael Khreich, Eric Granger, Ali Miri, and Robert Sabourin.
+\newblock On the memory complexity of the forward–backward algorithm.
+\newblock \emph{Pattern Recognition Letters}, 31\penalty0 (2):\penalty0 91 --
+  99, 2010.
+\newblock ISSN 0167-8655.
+\newblock \doi{https://doi.org/10.1016/j.patrec.2009.09.023}.
+\newblock URL
+  \url{http://www.sciencedirect.com/science/article/pii/S0167865509002578}.
+
 \bibitem[Kitagawa(1987)]{Kitagawa_1987}
 Genshiro Kitagawa.
 \newblock Non-gaussian state-space modeling of nonstationary time series.
@@ -144,27 +169,14 @@ Zhaobin Kuang, Peggy Peissig, Vitor~Santos Costa, Richard Maclin, and David
   Discovery \& Data Mining}, 2017.
 \newblock \doi{10.1145/3097983.3097998}.
 
-\bibitem[Larsen et~al.(2009)Larsen, Smastuen, Johannesen, Langmark, Parkin,
-  Bray, and Moller]{Larsen_2009}
-I.~K. Larsen, M.~Smastuen, T.~B. Johannesen, F.~Langmark, D.~M. Parkin,
-  F.~Bray, and B.~Moller.
-\newblock Data quality at the cancer registry of norway: an overview of
-  comparability, completeness, validity and timeliness.
-\newblock \emph{Eur J Cancer}, 45\penalty0 (7):\penalty0 1218--31, 2009.
-\newblock ISSN 1879-0852 (Electronic).
-\newblock URL
-  \url{http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Retrieve&db=PubMed&dopt=Citation&list_uids=19091545}.
-
-\bibitem[Leinonen et~al.(2018)Leinonen, Hansen, Skare, Skaaret, Silva,
-  Johannesen, and Nygard]{Leinonen_2018}
-M.~K. Leinonen, S.~A. Hansen, G.~B. Skare, I.~B. Skaaret, M.~Silva, T.~B.
-  Johannesen, and M.~Nygard.
-\newblock Low proportion of unreported cervical treatments in the cancer
-  registry of norway between 1998 and 2013.
-\newblock \emph{Acta Oncol}, 57\penalty0 (12):\penalty0 1663--1670, 2018.
-\newblock ISSN 1651-226X (Electronic) 0284-186X (Linking).
-\newblock \doi{10.1080/0284186X.2018.1497296}.
-\newblock URL \url{https://www.ncbi.nlm.nih.gov/pubmed/30169991}.
+\bibitem[Liu and Nocedal(1989)]{Liu_1989}
+Dong~C. Liu and Jorge Nocedal.
+\newblock On the limited memory bfgs method for large scale optimization.
+\newblock \emph{Math. Program.}, 45\penalty0 (1-3):\penalty0 503--528, August
+  1989.
+\newblock ISSN 0025-5610.
+\newblock \doi{10.1007/BF01589116}.
+\newblock URL \url{https://doi.org/10.1007/BF01589116}.
 
 \bibitem[Liu et~al.(2013)Liu, Ishikawa, Chen, Wollstein, S., and
   Rehg]{Liu_2013}
@@ -248,16 +260,6 @@ Andrew~C. Titman and Linda~D. Sharples.
 \newblock ISSN 02776715, 10970258.
 \newblock \doi{10.1002/sim.3033}.
 \newblock URL \url{http://doi.wiley.com/10.1002/sim.3033}.
-
-\bibitem[Ursin et~al.(2017)Ursin, Sen, Mottu, and Nygard]{Ursin_2017}
-G.~Ursin, S.~Sen, J.~M. Mottu, and M.~Nygard.
-\newblock Protecting privacy in large datasets-first we assess the risk; then
-  we fuzzy the data.
-\newblock \emph{Cancer Epidemiol Biomarkers Prev}, 26\penalty0 (8):\penalty0
-  1219--1224, 2017.
-\newblock ISSN 1538-7755 (Electronic) 1055-9965 (Linking).
-\newblock \doi{10.1158/1055-9965.EPI-17-0172}.
-\newblock URL \url{https://www.ncbi.nlm.nih.gov/pubmed/28754793}.
 
 \bibitem[Wang et~al.(2014)Wang, Sontag, and Wang]{Wang_2014}
 Xiang Wang, David Sontag, and Fei Wang.
