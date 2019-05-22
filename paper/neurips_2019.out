@@ -8,17 +8,14 @@
 \BOOKMARK [2][-]{subsection.3.3}{Hierarchical Model}{section.3}% 8
 \BOOKMARK [1][-]{section.4}{Inference}{}% 9
 \BOOKMARK [1][-]{section.5}{Experimental results}{}% 10
-\BOOKMARK [2][-]{subsection.5.1}{Data and Model Description}{section.5}% 11
-\BOOKMARK [2][-]{subsection.5.2}{Model Comparison}{section.5}% 12
-\BOOKMARK [2][-]{subsection.5.3}{Model Validation}{section.5}% 13
-\BOOKMARK [3][-]{subsubsection.5.3.1}{Parameter Estimation}{subsection.5.3}% 14
-\BOOKMARK [3][-]{subsubsection.5.3.2}{Model Validation}{subsection.5.3}% 15
-\BOOKMARK [1][-]{section.6}{Discussion and Conclusion}{}% 16
-\BOOKMARK [1][-]{appendix.A}{Supplemental Materials for Reproducibility}{}% 17
-\BOOKMARK [2][-]{subsection.A.1}{Scalable Computation}{appendix.A}% 18
-\BOOKMARK [2][-]{subsection.A.2}{Treatment Modeling}{appendix.A}% 19
-\BOOKMARK [2][-]{subsection.A.3}{Age Segmentation}{appendix.A}% 20
-\BOOKMARK [2][-]{subsection.A.4}{Parameter Transformation in Limited-Memory BFGS Optimization}{appendix.A}% 21
-\BOOKMARK [2][-]{subsection.A.5}{Optimization Settings}{appendix.A}% 22
-\BOOKMARK [2][-]{subsection.A.6}{Parameter Estimation}{appendix.A}% 23
-\BOOKMARK [2][-]{subsection.A.7}{Simulations of Kaplan-Meier Curves}{appendix.A}% 24
+\BOOKMARK [2][-]{subsection.5.1}{Model Comparison}{section.5}% 11
+\BOOKMARK [2][-]{subsection.5.2}{Model Validation}{section.5}% 12
+\BOOKMARK [1][-]{section.6}{Discussion and Conclusion}{}% 13
+\BOOKMARK [1][-]{appendix.A}{Supplemental Materials for Reproducibility}{}% 14
+\BOOKMARK [2][-]{subsection.A.1}{Scalable Computation}{appendix.A}% 15
+\BOOKMARK [2][-]{subsection.A.2}{Treatment Modeling}{appendix.A}% 16
+\BOOKMARK [2][-]{subsection.A.3}{Age Segmentation}{appendix.A}% 17
+\BOOKMARK [2][-]{subsection.A.4}{Parameter Transformation in Limited-Memory BFGS Optimization}{appendix.A}% 18
+\BOOKMARK [2][-]{subsection.A.5}{Optimization Settings}{appendix.A}% 19
+\BOOKMARK [2][-]{subsection.A.6}{Parameter Estimation}{appendix.A}% 20
+\BOOKMARK [2][-]{subsection.A.7}{Simulations of Kaplan-Meier Curves}{appendix.A}% 21
