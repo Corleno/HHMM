@@ -41,37 +41,37 @@
 % authors names on the first line, and the last on the second line, try using
 % \AND instead of \And before the third author name.
 
-\author{%
-  Rui Meng\thanks{Use footnote for providing further information
-    about author (webpage, alternative address)---\emph{not} for acknowledging
-    funding agencies.} \\
-  Department of Statistics\\
-  University of California\\
-  Santa Cruz, CA 95060 \\
-  \texttt{rmeng1@ucsc.edu} \\
-  % examples of more authors
-   \And
-   Braden Soper \\
-   Lawrence Livermore National Laboratory \\
-   Livermore, CA \\
-   \texttt{soper3@llnl.gov} \\
-   \AND
-   Jan F. Nygard \\
-   Cancer Registry of Norway \\
-   Oslo, Norway \\
-   \texttt{jan.nygard@kreftregisteret.no} \\
-   \And
-   Mari Nygard \\
-   Cancer Registry of Norway \\
-   Oslo, Norway \\
-   \texttt{mari.nygard@kreftregisteret.no} \\
-   \And
-   Herbert Lee \\
-   Department of Statistics\\
-   University of California\\
-   Santa Cruz, CA 95060 \\
-   \texttt{herbie@ucsc.edu} \\
-}
+%\author{%
+%  Rui Meng\thanks{Use footnote for providing further information
+%    about author (webpage, alternative address)---\emph{not} for acknowledging
+%    funding agencies.} \\
+%  Department of Statistics\\
+%  University of California\\
+%  Santa Cruz, CA 95060 \\
+%  \texttt{rmeng1@ucsc.edu} \\
+%  % examples of more authors
+%   \And
+%   Braden Soper \\
+%   Lawrence Livermore National Laboratory \\
+%   Livermore, CA \\
+%   \texttt{soper3@llnl.gov} \\
+%   \AND
+%   Jan F. Nygard \\
+%   Cancer Registry of Norway \\
+%   Oslo, Norway \\
+%   \texttt{jan.nygard@kreftregisteret.no} \\
+%   \And
+%   Mari Nygard \\
+%   Cancer Registry of Norway \\
+%   Oslo, Norway \\
+%   \texttt{mari.nygard@kreftregisteret.no} \\
+%   \And
+%   Herbert Lee \\
+%   Department of Statistics\\
+%   University of California\\
+%   Santa Cruz, CA 95060 \\
+%   \texttt{herbie@ucsc.edu} \\
+%}
 
 \begin{document}
 
@@ -326,6 +326,8 @@ In summary, this paper has made the following contributions:
 \newpage
 \appendix
 \section{Supplemental Materials for Reproducibility}
+The source code for re-running all the experiments detailed here and all data are available from \url{https://github.com/Corleno/HHMM}.
+
 \subsection{Scalable Computation} \label{sec:scale}
 Since population screening datasets can contain millions of records. direct inference may be prohibitively expensive and more scalable approaches are necessary. We scale our EM algorithm by parallelizing the inference across observations using $\tilde{N}$ clusters, $\{C_n\}_{n=1}^{\tilde{N}}$, in three parts. We first compute the conditional posterior distribution of $z_n$ in each cluster using (\ref{Pos_I}). The time complexity for each cluster is $O(|C_n|ZM^2T)$ \citep{KHREICH_2010}. We then compute the optimal state sequences in each cluster $C_n$ using (\ref{Pos_S}) with the same time complexity $O(|C_n|ZM^2T)$ \citep{Arturs_2016}. Finally, we compute the gradients in each cluster then reduce all local gradients to global gradients for the optimization in the M-step. In detail the EMCLL is rewritten as
 \begin{eqnarray*}
