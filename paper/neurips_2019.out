@@ -14,11 +14,11 @@
 \BOOKMARK [3][-]{subsubsection.5.3.1}{Parameter Estimation}{subsection.5.3}% 14
 \BOOKMARK [3][-]{subsubsection.5.3.2}{Model Validation}{subsection.5.3}% 15
 \BOOKMARK [1][-]{section.6}{Discussion and Conclusion}{}% 16
-\BOOKMARK [1][-]{section.7}{Supplemental Materials for Reproducibility}{}% 17
-\BOOKMARK [2][-]{subsection.7.1}{Scalable Computation}{section.7}% 18
-\BOOKMARK [2][-]{subsection.7.2}{Treatment Modeling}{section.7}% 19
-\BOOKMARK [2][-]{subsection.7.3}{Age Segmentation}{section.7}% 20
-\BOOKMARK [2][-]{subsection.7.4}{Parameter Transformation in Limited-Memory BFGS Optimization}{section.7}% 21
-\BOOKMARK [2][-]{subsection.7.5}{Optimization Settings}{section.7}% 22
-\BOOKMARK [2][-]{subsection.7.6}{Parameter Estimation}{section.7}% 23
-\BOOKMARK [2][-]{subsection.7.7}{Simulations of Kaplan-Meier Curves}{section.7}% 24
+\BOOKMARK [1][-]{appendix.A}{Supplemental Materials for Reproducibility}{}% 17
+\BOOKMARK [2][-]{subsection.A.1}{Scalable Computation}{appendix.A}% 18
+\BOOKMARK [2][-]{subsection.A.2}{Treatment Modeling}{appendix.A}% 19
+\BOOKMARK [2][-]{subsection.A.3}{Age Segmentation}{appendix.A}% 20
+\BOOKMARK [2][-]{subsection.A.4}{Parameter Transformation in Limited-Memory BFGS Optimization}{appendix.A}% 21
+\BOOKMARK [2][-]{subsection.A.5}{Optimization Settings}{appendix.A}% 22
+\BOOKMARK [2][-]{subsection.A.6}{Parameter Estimation}{appendix.A}% 23
+\BOOKMARK [2][-]{subsection.A.7}{Simulations of Kaplan-Meier Curves}{appendix.A}% 24
