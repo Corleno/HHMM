@@ -91,16 +91,24 @@ class Model(object):
         loss, acc = self.model.evaluate(X, Y, batch_size = batch_size)
         print("loss: {}, acc: {}".format(loss, acc))
         if confusion:
-            pred_Y = np.round(self.model.predict(X))
+            pred_Y_score = self.model.predict(X)
+            pred_Y = np.round(pred_Y_score)
             TP = (pred_Y[Y==1] == 1).sum()
             FP = (pred_Y[Y==1] == 0).sum()
             TN = (pred_Y[Y==0] == 0).sum()
             FN = (pred_Y[Y==0] == 1).sum()
             print("TP: {}, FP: {}, TN:{}, FN:{}".format(TP, FP, TN, FN))
-            from sklearn.metrics import roc_curve, auc
-            fpr, tpr, thresholds = roc_curve(Y, self.model.predict(X))
-            roc_auc = auc(fpr, tpr)
-            print("auc: {}".format(roc_auc))
+            # model evaluation:
+            from sklearn.metrics import roc_curve, auc, f1_score, average_precision_score, precision_score, recall_score, roc_auc_score
+            roc_auc = roc_auc_score(Y, pred_Y_score)
+            f1 = f1_score(Y, pred_Y)
+            aver_prec = average_precision_score(Y, pred_Y)
+            prec = precision_score(Y, pred_Y)
+            recall = recall_score(Y, pred_Y)
+            print("auc: {}, f1: {}, average_prec: {}, prec: {}, recall: {}".format(roc_auc, f1, aver_prec, prec, recall))
+            
+            # auc curve
+            fpr, tpr, thresholds = roc_curve(Y, pred_Y)
             fig = plt.figure()
             lw = 2
             plt.plot(fpr, tpr, color='darkorange',
@@ -110,10 +118,11 @@ class Model(object):
             plt.ylim([0.0, 1.05])
             plt.xlabel('False Positive Rate')
             plt.ylabel('True Positive Rate')
-            plt.title('ROC_gru')
+            plt.title('ROC_lstm')
             plt.legend(loc="lower right")
-            plt.savefig("../res/ROC_gru.png")
+            plt.savefig("../res/ROC_lstm.png")
             plt.close(fig)
+
 
     def save_model(self):
         # serialize model to JSON

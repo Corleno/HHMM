@@ -17,7 +17,10 @@ import numpy as np
 from matfuncs import expm
 from scipy import stats
 from scipy import special
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
+
 
 def Initialization():
     global ages_test, testTypes_test, observations_test, treatment_indx_test, censor_ages_test, death_state_test, ind, nTests, inv, n_inv, MPmatrixs, nPatients_test
@@ -1604,7 +1607,10 @@ def Loglikelihood_obs0(indx, Z, Pars, verbose = False):
         loglik = Loglikelihood_group_obs0(patient_tests, patient_observations, patient_ages, 0, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose, do_last = True)
     return loglik    
 
-def Predict_dir(Z_probs, Pars, lasts, n_mcmc = 100, rule = 0, time_flag = False): 
+
+
+
+def Predict_dir(Z_probs, Pars, lasts, n_mcmc = 1000, rule = 0, time_flag = False): 
     Alpha = Pars[0][1]
     true_status = []
     predicted_status = []
@@ -1612,6 +1618,7 @@ def Predict_dir(Z_probs, Pars, lasts, n_mcmc = 100, rule = 0, time_flag = False)
     
     indx = 0
     for Z_prob, last, patient_observations, patient_tests in zip(Z_probs, lasts, observations_test, testTypes_test):
+        # ts = time.time()
         indx += 1
         if indx % 1000 == 999:
             print ("{} individuals has been completed.".format(indx+1, n_test))
@@ -1655,13 +1662,13 @@ def Predict_dir(Z_probs, Pars, lasts, n_mcmc = 100, rule = 0, time_flag = False)
         true_status.append(patient_true_status)
         predicted_status.append(patient_predicted_status)
         predicted_status_probs.append(patient_predicted_status_prob)
+        # print("time:{}".format(time.time() - ts))
 
     true_status = np.asarray(true_status)
     predicted_status = np.asarray(predicted_status)
     predicted_status_probs = np.asarray(predicted_status_probs)
 
     return true_status, predicted_status, predicted_status_probs  
-
 
 def Evaluate(true_Y, pred_Y, pred_Y_prob):
     TP = (pred_Y[true_Y==1] == 1).sum()
@@ -1670,10 +1677,17 @@ def Evaluate(true_Y, pred_Y, pred_Y_prob):
     FN = (pred_Y[true_Y==0] == 1).sum()
     print("TP: {}, FP: {}, TN:{}, FN:{}".format(TP, FP, TN, FN))
     print("ACC: {}".format(np.round((TP+TN)/(TP+FP+TN+FN), 4)))
-    from sklearn.metrics import roc_curve, auc
-    fpr, tpr, thresholds = roc_curve(true_Y, pred_Y_prob)
-    roc_auc = auc(fpr, tpr)
-    print("auc: {}".format(np.round(roc_auc, 4)))
+    from sklearn.metrics import roc_curve, auc, f1_score, average_precision_score, precision_score, recall_score, roc_auc_score
+    roc_auc = roc_auc_score(true_Y, pred_Y_prob)
+    f1 = f1_score(true_Y, pred_Y)
+    aver_prec = average_precision_score(true_Y, pred_Y)
+    prec = precision_score(true_Y, pred_Y)
+    recall = recall_score(true_Y, pred_Y)
+    print("Prior: {}".format(args.Z_prior))
+    print("auc: {}, f1: {}, average_prec: {}, prec: {}, recall: {}".format(roc_auc, f1, aver_prec, prec, recall))
+        
+    # auc curve
+    fpr, tpr, thresholds = roc_curve(true_Y, pred_Y)
     fig = plt.figure()
     lw = 2
     plt.plot(fpr, tpr, color='darkorange',
@@ -1687,8 +1701,6 @@ def Evaluate(true_Y, pred_Y, pred_Y_prob):
     plt.legend(loc="lower right")
     plt.savefig("../res/ROC_hhmm_{}.png".format(str(args.Z_prior)))
     plt.close(fig)
-
-
 
 if __name__ == "__main__":
     #################################
@@ -1706,13 +1718,13 @@ if __name__ == "__main__":
     ####### HHMM Prediction #########
     #################################
     # Compute predictive distribution of model index
-    # Compute_pos_Z_test(p, verbose = False)
-    # with open("../res/{}/res_posZ_prior_{}".format(out_folder, str(p)), "wb") as res:
-    #     pickle.dump(Z_pos, res)
+    Compute_pos_Z_test(p, verbose = False)
+    with open("../res/{}/res_posZ_prior_{}".format(out_folder, str(p)), "wb") as res:
+        pickle.dump(Z_pos, res)
     # Compute predictive distribution of last second state given model index z
-    # Compute_pos_last2(currPars, verbose = True)
+    Compute_pos_last2(currPars, verbose = True)
     # Compute predictive distribution of last state
-    # Compute_pos_last(currPars, verbose = True)
+    Compute_pos_last(currPars, verbose = True)
 
     ################################
     ######## Save Results ##########
@@ -1735,7 +1747,9 @@ if __name__ == "__main__":
 
     # lasts_grade = Predict_grade(currPars, lasts)
     # true_label, predicted_label, predicted_label_prob = Predict(lasts_grade, rule = 0)
+    ts = time.time()
     true_label, predicted_label, predicted_label_prob = Predict_dir(Z_pos, currPars, lasts, time_flag=True)
+    print("prediction costs {}s".format(time.time() - ts))
 
     Evaluate(true_label, predicted_label, predicted_label_prob )
 

@@ -6,4 +6,4 @@
 
 source ~/.bashrc
 
-srun python EM_hierarchical_prediction.py --Z_prior 0.2
+srun python EM_hierarchical_prediction.py --Z_prior 0.1
