@@ -1,6 +1,6 @@
 This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
 Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
-The top-level auxiliary file: neurips_2019.aux
+The top-level auxiliary file: neurips_2019.hhmm.anonymous.aux
 The style file: plainnat.bst
 Database file #1: ref.bib
 Name 1 in "Bartolomeo, N, and Trerotoli, P. and Serio, G." has a comma at the end for entry Bartolonemo_2011
@@ -14,7 +14,7 @@ while executing---line 1429 of file plainnat.bst
 Warning--empty publisher in Cox_1965
 You've used 36 entries,
             2773 wiz_defined-function locations,
-            912 strings with 14063 characters,
+            912 strings with 14093 characters,
 and the built_in function-call counts, 19835 in all, are:
 = -- 1804
 > -- 1266

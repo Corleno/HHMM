@@ -190,10 +190,19 @@ Due to the latent characteristics of both model indices and patient states, the 
 	\end{align}
 \end{itemize}
 
-This scalable EM and its computational complexity analysis are further discussed in Appendix~\ref{sec:scale}.
+Since population screening datasets can contain millions of records. direct inference may be prohibitively expensive and more scalable approaches are necessary. We scale our EM algorithm by parallelizing the inference across observations using $\tilde{N}$ clusters, $\{C_n\}_{n=1}^{\tilde{N}}$, in three parts. We first compute the conditional posterior distribution of $z_n$ in each cluster using (\ref{Pos_I}). The time complexity for each cluster is $O(|C_n|ZM^2T)$ \citep{KHREICH_2010}. We then compute the optimal state sequences in each cluster $C_n$ using (\ref{Pos_S}) with the same time complexity $O(|C_n|ZM^2T)$ \citep{Arturs_2016}. Finally, we compute the gradients in each cluster then reduce all local gradients to global gradients for the optimization in the M-step. In detail the EMCLL is rewritten as
+\begin{eqnarray*}
+	& \sum_{n=1}^{N}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}) \\ 
+	= & \sum_{\tilde{n}=1}^{\tilde{N}}\sum_{n\in C_{\tilde{n}}}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}).
+\end{eqnarray*} 
+Taking gradient on both sizes, we have
+\begin{eqnarray*}
+	& \frac{\partial}{\partial \bm{\psi}}\sum_{n=1}^{N}E_{z_n,\bm s_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}) \\
+	= & \sum_{\tilde{n}=1}^{\tilde{N}} \frac{\partial}{\partial \bm{\psi}}\sum_{n\in C_{\tilde{n}}}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}).
+\end{eqnarray*}
+Automatic differentiation (AD) \cite{Baydin_2018} is utilized to compute the gradients in each cluster. Summing over all clusters, we get the gradient of the EMCLL. Using this gradient we adapt the Limited-Memory BFGS \cite{Liu_1989} algorithm to estimate $\bm \psi$. The complexity of each cluster in optimization is intractable, but it increase inference speed around $\tilde{N}$ times.
 
-
-\section{Experimental results}\label{sec:data}
+\section{Experimental Results}\label{sec:data}
 The HIHMM is demonstrated on a true population-level cervical cancel screening test dataset from the Cancer Registry of Norway. Data used in the analyses will be available on request from the Cancer Registry of Norway, given legal basis according to the GDPR. 
 This dataset contains 1.7 million patients' screening testing records. Each patient has a censored observation at the last time stamp $t_{c}$, denoted by $O_{c}$, which indicates whether the woman is dead or alive at time $t_c$. Each patient has treatment indices to show when and how many treatments occurred, and results of screening tests for each of cytology, histology and hpv. Cytology and histology have four levels of outcomes while hpv has two levels.
 
@@ -216,7 +225,11 @@ $\tilde{\bm \alpha}_{sk} \in \mathbb{R}^{+L_k}$ are hyper-parameters for observa
 	\end{cases}
 \end{eqnarray*}
 
-We choose the age partition as $\mathcal{A}$ as $[0, 23)$, $[23,30)$, $[30,60)$ and $[60, \infty)$. More details are available in the supplementary material, including treatment modeling and inference in Appendix~\ref{sec:treatment}, age partition selection in Appendix~\ref{sec:age}, model training and optimization in Appendix~\ref{sec:pars_transformation}, and hyper-parameters in Appendix~\ref{sec:opt_set}.
+We choose the age partition as $\mathcal{A}$ as $[0, 23)$, $[23,30)$, $[30,60)$ and $[60, \infty)$. More details are available in the supplementary material, including treatment modeling and inference in Appendix~\ref{sec:treatment}, age partition selection in Appendix~\ref{sec:age}, model training and optimization in Appendix~\ref{sec:pars_transformation}.
+
+
+In the proposed learning approach, we set the number of EM iterations at $N_{\mathrm{EM}} = 100$, and in the Limited-memory BFGS (L-BFGS) approach we set the number of optimization iterations as $N_{\mathrm{L-BFGS}} = 8$.  Automatic differentiation is implemented using the autograd package \cite{Maclaurin_2016} in Python.
+
 
 \subsection{Model Comparison}
 We randomly select 80000 patients' records for training and select another 20000 records for testing. The goal is to predict the status at the last visit. Specifically, if a patient has at least one result whose level is greater than 1, then the status is defined as high risk denoted as $1$. Otherwise, the status is defined as low risk denoted as $0$. Thus, the problem is defined as a binary classification problem. 
@@ -228,7 +241,7 @@ $p(S^*_{T}|\bm O^*, \hat{\bm \psi}) \sum_{z} p(z^* = z|\bm O^*, \hat{\bm \psi}) 
 0 & \mathrm{otherwise} \\
 \end{cases}$.
 
-For the comparator recurrent neural network models, each patient's record is modeled as one time-series and the features at each visit includes patient's age, patient's screening result and patient's treatment indicator. The screening result of patient $n$ at the $t$th visit is $\vec{\bm G_{n,t}}$. The treatment indicator is equal to 1 if and only if the patient has accepted treatment. LSTM \citep{Cho_2014}, stacked LSTM \citep{Dyer_2015} and GRU \citep{Chung_2014} are implemented for model comparison. For stacked LSTM, two LSTMs are stacked. We summarize prediction results in Table~\ref{Model_Comparison}. It shows our model outperforms state of the art methods in terms of Area Under the Curve (AUC), F1 value (F1), Average Precision (AP), Precision (P) and Recall (R). Our HIHMM with prior setting $p = 0.001$ obtains the best overall prediction performance.
+For the comparator recurrent neural network models, each patient's record is modeled as one time-series and the features at each visit includes patient's age, patient's screening result and patient's treatment indicator. The screening result of patient $n$ at the $t$th visit is $\vec{\bm G_{n,t}}$. The treatment indicator is equal to 1 if and only if the patient has accepted treatment. LSTM \citep{Cho_2014}, stacked LSTM \citep{Dyer_2015} and GRU \citep{Chung_2014} are implemented for model comparison. For stacked LSTM, two LSTMs are stacked. We summarize prediction results in Table~\ref{Model_Comparison}. It shows our model outperforms state of the art methods overall on the set of criteria: Area Under the Curve (AUC), F1 value (F1), Average Precision (AP) and Recall (R). Furthermore, our HIHMM with prior setting $p = 0.001$ obtains the best overall prediction performance.
 
 \begin{table}[ht!]
 	\centering
@@ -321,18 +334,6 @@ In summary, this paper has made the following contributions:
 \section{Supplemental Materials for Reproducibility}
 The source code for re-running all the experiments detailed here and all data are available from \url{https://github.com/Corleno/HHMM}.
 
-\subsection{Scalable Computation} \label{sec:scale}
-Since population screening datasets can contain millions of records. direct inference may be prohibitively expensive and more scalable approaches are necessary. We scale our EM algorithm by parallelizing the inference across observations using $\tilde{N}$ clusters, $\{C_n\}_{n=1}^{\tilde{N}}$, in three parts. We first compute the conditional posterior distribution of $z_n$ in each cluster using (\ref{Pos_I}). The time complexity for each cluster is $O(|C_n|ZM^2T)$ \citep{KHREICH_2010}. We then compute the optimal state sequences in each cluster $C_n$ using (\ref{Pos_S}) with the same time complexity $O(|C_n|ZM^2T)$ \citep{Arturs_2016}. Finally, we compute the gradients in each cluster then reduce all local gradients to global gradients for the optimization in the M-step. In detail the EMCLL is rewritten as
-\begin{eqnarray*}
-	& \sum_{n=1}^{N}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}) \\ 
-	= & \sum_{\tilde{n}=1}^{\tilde{N}}\sum_{n\in C_{\tilde{n}}}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}).
-\end{eqnarray*} 
-Taking gradient on both sizes, we have
-\begin{eqnarray*}
-	& \frac{\partial}{\partial \bm{\psi}}\sum_{n=1}^{N}E_{z_n,\bm s_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}) \\
-	= & \sum_{\tilde{n}=1}^{\tilde{N}} \frac{\partial}{\partial \bm{\psi}}\sum_{n\in C_{\tilde{n}}}E_{z_n,\bm S_n}(\ell(\bm \psi| \bm O_n, z_n, \bm S_n)| \bm O_n, \bm \psi^{(t-1)}).
-\end{eqnarray*}
-Automatic differentiation (AD) \cite{Baydin_2018} is utilized to compute the gradients in each cluster. Summing over all clusters, we get the gradient of the EMCLL. Using this gradient we adapt the Limited-Memory BFGS \cite{Liu_1989} algorithm to estimate $\bm \psi$. The complexity of each cluster in optimization is intractable, but it increase inference speed around $\tilde{N}$ times.
 
 \subsection{Treatment Modeling}\label{sec:treatment}
 Because of treatments, the inference has three modifications for FFBS, Viterbi and EMCLL. Without loss of generality we suppose one woman has $m$ treatments indexed by $\{r_1, \ldots, r_m\}$. Then the observation sequence $\bm O$ is partitioned as 
@@ -404,9 +405,6 @@ In the HIHMM, model parameters $\bm \psi$ are summarized as follows:
 \end{itemize}
 
 In the M-step, all model parameters need to be optimized. To take advantage of the L-BFGS approach, we need to transform the constrained optimization problem to an unconstrained optimization problem. To do this we transform all parameters on the log scale, which means we let $\tilde{\bm \alpha}^* = \log {\tilde{\bm \alpha}}$, $\bm\eta^* = \log \bm \eta$, $\bm \alpha^* = \log \bm \alpha$ and $\bm \lambda^* = \log \bm \lambda$. Then we let $\bm \psi^* = (\tilde{\bm \alpha}^*, \bm \eta^*, \bm \alpha^*, \bm \lambda^*)$. Finally we maximize the EMCLL with respect to $\bm \psi^*$ rather than $\bm \psi$. After the optimization, the optimized $\hat{\bm \psi}$ are accessed by $\hat{\bm \psi} = \exp(\hat{\bm \psi}^*)$.
-
-\subsection{Optimization Settings} \label{sec:opt_set}
-In the proposed learning approach, we set the number of EM iterations at $N_{EM} = 100$, and in the L-BFGS approach we set the number of optimization iterations as $N_{L-BFGS} = 8$.  Automatic differentiation is implemented using the autograd package \cite{Maclaurin_2016} in Python.
 
 
 \subsection{Parameter Estimation} \label{sec:pars}
