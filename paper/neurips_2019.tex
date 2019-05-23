@@ -228,7 +228,7 @@ $p(S^*_{T}|\bm O^*, \hat{\bm \psi}) \sum_{z} p(z^* = z|\bm O^*, \hat{\bm \psi}) 
 0 & \mathrm{otherwise} \\
 \end{cases}$.
 
-For the comparator recurrent neural network models, each patient's record is modeled as one time-series and the features at each visit includes patient's age, patient's screening result and patient's treatment indicator. The screening result of patient $n$ at the $t$th visit is $\vec{\bm G_{n,t}}$. The treatment indicator is equal to 1 if and only if the patient has accepted treatment. LSTM \citep{Cho_2014}, stacked LSTM \citep{Dyer_2015} and GRU \citep{Chung_2014} are implemented for model comparison. For stacked LSTM, two LSTMs are stacked. We summarize prediction results in Table~\ref{Model_Comparison}. It shows our model outperforms state of the art methods in terms of Area Under the Curve (AUC), F1 value (F1), Average Precision (AP), Precision (P) and Recall (R). Our HIHMM with prior setting $p = 0.1$ obtains the best overall prediction performance.
+For the comparator recurrent neural network models, each patient's record is modeled as one time-series and the features at each visit includes patient's age, patient's screening result and patient's treatment indicator. The screening result of patient $n$ at the $t$th visit is $\vec{\bm G_{n,t}}$. The treatment indicator is equal to 1 if and only if the patient has accepted treatment. LSTM \citep{Cho_2014}, stacked LSTM \citep{Dyer_2015} and GRU \citep{Chung_2014} are implemented for model comparison. For stacked LSTM, two LSTMs are stacked. We summarize prediction results in Table~\ref{Model_Comparison}. It shows our model outperforms state of the art methods in terms of Area Under the Curve (AUC), F1 value (F1), Average Precision (AP), Precision (P) and Recall (R). Our HIHMM with prior setting $p = 0.001$ obtains the best overall prediction performance.
 
 \begin{table}[ht!]
 	\centering
@@ -243,22 +243,29 @@ For the comparator recurrent neural network models, each patient's record is mod
 		\hline
 		GRU &  & \textbf{0.9922} & 0.8490 & 0.4322 & 0.2273 & 0.7108 & 0.3105 \\
 		\hline
-		HIHMM & 0.1 & 0.9917 & \textbf{0.9129} & \textbf{0.5174} & \textbf{0.2758} & 0.5779 & \textbf{0.4684} \\
+		HIHMM & 0.0001 & 0.9913 & 0.9136 & 0.5085 & 0.2649 & 0.5488 & 0.4737 \\
+		\hline
+		HIHMM & 0.001 & 0.9914 & \textbf{0.9190} & \textbf{0.5210} & \textbf{0.2774} & 0.5589 & \textbf{0.4895} \\
+		\hline
+		HIHMM & 0.01 & 0.9916 & 0.9154 & 0.5185 & 0.2757 & 0.5652 & 0.4789 \\
+		\hline
+		HIHMM & 0.1 & 0.9917 & 0.9129 & 0.5174 & 0.2758 & 0.5779 & 0.4684 \\
 		\hline
 		HIHMM & 0.2 & 0.9918 & 0.9087 & 0.4762 & 0.2426 & 0.6000 & 0.3947 \\
 		\hline
 		HIHMM & 0.3 & 0.9915 & 0.9081 & 0.3929 & 0.1837 & 0.6111 & 0.2895 \\
 		\hline
-		HIHMM & 0.4 & 0.9916 & 0.9013 & 0.3883 & 0.1850 & 0.6386 & 0.2789 \\
-		\hline
-		HIHMM & 0.5 & 0.9918 & 0.8985 & 0.3971 & 0.1940 & 0.6585 & 0.2842 \\
-		\hline
+%		HIHMM & 0.4 & 0.9916 & 0.9013 & 0.3883 & 0.1850 & 0.6386 & 0.2789 \\
+%		\hline
+%		HIHMM & 0.5 & 0.9918 & 0.8985 & 0.3971 & 0.1940 & 0.6585 & 0.2842 \\
+%		\hline
 	\end{tabular}
 	\label{Model_Comparison}
 \end{table}
 
 
 \subsection{Model Validation}
+From the model comparison with respect to subset of data, there is always a trade off between precision and recall.
 We set the model index prior $p = 0.2$ based on model comparison results and expert opinion. We present two types of results on population-level data. First we present the MLEs for all model parameters along with bootstrapped standard deviations. Second we perform model validation using Kaplan-Meier estimators as suggested in \cite{titman_general_2008}.
 
 %\subsubsection{Parameter Estimation}
@@ -280,7 +287,7 @@ On the other hand, the HIHMM has a relatively high Kaplan-Meier estimate at time
 	\label{KM_PF}
 \end{figure}
 
-\section{Discussion and Conclusion}
+\section{Conclusion and Discussion}
 One of the possible applications of the HIHMM in the context of population-based screening programs is risk stratification of the population.  The latent random variable $z_n$ is an indicator of belonging to a frail class in the population.  Given the learned model parameters $\bm \psi$  it is possible to compute the posterior probability of belonging to the frailty class for individual women.  In other words, given an observed sequence of test results ${\bm O}_n$ and model parameters  $\bm \psi$,  the posterior predictive distribution $p(z_n | \psi, {\bm O}_n)$ is of interest.  This parameter gives a measure of the likelihood of an individual to be at risk of developing cervical cancer conditioned on their observed test results. Such information could be used to more efficiently screen a population by avoiding the over screening of women at low-risk and the under screening of women at high-risk.  
 
 
@@ -299,7 +306,7 @@ In summary, this paper has made the following contributions:
 \begin{itemize}
 	\item We make CTIHMM inference possible for population-level datasets by using piece-wise constant intensity functions and deriving a scalable inference algorithm.
 	\item We put a hierarchical structure over the CTIHMM to explain population heterogeneity in terms of frailty, resulting in our HIHMM.
-	\item We utilize prior distributions in the model to achieve more accurate estimates when data are scarce.    
+	\item We utilize prior distributions in the model to achieve more accurate estimates when dealing with imbalanced data.    
 	\item We perform full model inference and prediction on subset of a cancer screening dataset and show that our model outperforms comparators on the prediction task.
 	\item We perform full model inference on a cancer screening dataset and show that modeling population heterogeneity improves performance in terms of Kaplan-Meier estimators. 
 	\item We illustrate how the model may be used to better inform public health professionals by providing a risk stratification mechanism. 
