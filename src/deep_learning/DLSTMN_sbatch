@@ -6,4 +6,4 @@
 
 source ~/.bashrc
 
-srun python EM_hierarchical_prediction.py --Z_prior 0.0001
+srun python3 DLSTM_N.py > DLSTMN.log

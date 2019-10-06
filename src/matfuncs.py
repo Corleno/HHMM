@@ -2,12 +2,6 @@
 Sparse matrix functions
 """
 
-#
-# Authors: Travis Oliphant, March 2002
-#          Anthony Scopatz, August 2012 (Sparse Updates)
-#          Jake Vanderplas, August 2012 (Sparse Updates)
-#
-
 from __future__ import division, print_function, absolute_import
 
 __all__ = ['expm', 'inv']

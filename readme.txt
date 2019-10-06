@@ -26,6 +26,17 @@ Z_prior: prior probability of Model 1 (prior proportion of potential patients).
 bootstrap_seed: seed number setting in Boostrap, default = 0.
 bootstrap_total: number of total seeds, defualt = 5000
 
+return: 
+counter: the number of iterations in EM
+currZ_pos_list: [n_patients]
+currStates_list: [currStates_0, currStates_1]
+currAlpha: [currAlpha_0, currAlpha_1]: [[nStates_i, 4], [nStates_i,4], [nStates_i,2]]
+currEta: [currEta_0, currEta_1]: [nState_i, 3]
+currW: [currW_0, currW_1]: [4, n_inv], [9, n_inv]
+currC: [currC_0, currC_1]: [nState_i, n_inv]
+currNegLogLik: scalar
+inv: age segmentation
+
 validation
 dir: src/model_validation/model_validation.py
 

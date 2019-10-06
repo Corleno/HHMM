@@ -1,8 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 '''
 
-EM Algorithm for DBN model.
-Most recent version as of 12/28/17.
+Prediction for HHMM
+Most recent version as of 05/06/2019
 
 '''
 
@@ -10,49 +10,32 @@ import argparse
 import os
 # import logging
 import sys
-sys.path.append('../')
-sys.path.append('~/')
 ### Libraries ###
 import pickle
 import time
-import autograd.numpy as np
-from scipy import optimize
-from autograd.scipy import stats
-from autograd.scipy import special
-from autograd import grad
-
-### Local Library
+import numpy as np
 from matfuncs import expm
+from scipy import stats
+from scipy import special
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
 
-### Parallel Library
-from mpi4py import MPI
 
 def Initialization():
-    global comm, rank
-    global ages, testTypes, observations, treatment_indx, censor_ages, death_states, ind, nTests, inv, n_inv, MPmatrixs, nPatients
-    global out_path, max_steps_em, max_steps_optim, model, autograd_optim, p, args
+    global ages_test, testTypes_test, observations_test, treatment_indx_test, censor_ages_test, death_state_test, ind, nTests, inv, n_inv, MPmatrixs, nPatients_test
+    global out_path, out_folder, max_steps_em, max_steps_optim, model, autograd_optim, p, args, n_test
     global currPars, curr_parameter_vector
     
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size()
-    print('rank: ', rank)
-    print('size: ', size)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--name", help="name of the experiment", default="EM_hierarchical")
+    parser.add_argument("--name", help="name of the experiment", default="prediction")
     parser.add_argument("--min_age", help="minimum age", type=int, default=16)
-    parser.add_argument("--dataset", help="data specification: updated_data, updated_nonzero_data, survey_patient_data are available", default="updated_data")
+    parser.add_argument("--dataset", help="data specification: data_1000 are available", default="data_1000")
     parser.add_argument("--age_inv", help="age interval sepecification", default="inv4")
-    parser.add_argument("--n_patients_per_proc", help="number of patients per process", type=int, default=100)
-    parser.add_argument("--max_steps_em", help="maximum number of EM iterations", type=int, default=100)
-    parser.add_argument("--max_steps_optim", help="maximum number of optim iterations", type=int, default=5)
     parser.add_argument("--model", help="discrete or continuous model", default="continuous")
     parser.add_argument("--test", help="boolean indicator for testing", action='store_true')
-    parser.add_argument("--autograd_optim", help="boolean indicator for auto-gradient in optimization", action='store_true')
     parser.add_argument("--Z_prior", help="prior probability of Model 1", type=np.float32, default=0.5)
-    parser.add_argument("--bootstrap_seed", help="seed number setting in Boostrap", type=int, default=0)
-    parser.add_argument("--bootstrap_total", help="number of total seeds in pool", type = int, default=5000)
 
     args = parser.parse_args()
 
@@ -60,32 +43,19 @@ def Initialization():
         os.chdir(os.path.dirname(__file__))
     except:
         pass
-
-    # if np.isinf(args.n_patients_per_proc):
-    #     total_num_patient_str = 'all'
-    # else:
-    #     total_num_patient_str = str(args.n_patients_per_proc*size)
-    total_num_patient_str = str(args.n_patients_per_proc*size)
+        
     if args.test:
-        out_folder = args.name + '_' + str(args.min_age) + '_' + args.dataset + '_' + args.age_inv + '_' + args.model + '_' + total_num_patient_str + '_test'
+        out_folder = args.name + '_' + str(args.min_age) + '_' + args.dataset + '_' + args.age_inv + '_' + args.model + '_test'
     else:
-        out_folder = args.name + '_' + str(args.min_age) + '_' + args.dataset + '_' + args.age_inv + '_' + args.model + '_' + total_num_patient_str
+        out_folder = args.name + '_' + str(args.min_age) + '_' + args.dataset + '_' + args.age_inv + '_' + args.model
     
     min_age = args.min_age
     do_truncate_ages = True if min_age > 16 else False
     dataset = args.dataset
     inv_indx = args.age_inv
-    max_steps_em = args.max_steps_em 
-    max_steps_optim = args.max_steps_optim
     model = args.model
-    autograd_optim = args.autograd_optim
     p = args.Z_prior 
-    # indx for rank where we assume totally we have 5000 folders of data.
-    np.random.seed(args.bootstrap_seed)
-    rank_dict = np.random.choice(args.bootstrap_total, size).astype(np.int32)
-    
-    # logging.basicConfig(filename=out_path + "/em.log", level = logging.INFO, format='%(asctime)s %(message)s')       
-
+ 
     ##########################
     ##### Initialization #####
     ##########################
@@ -93,8 +63,6 @@ def Initialization():
     nStates_1 = 4
     nTests = 3
 
-    # this number should be less than or equal to 100.
-    n_patients_per_proc = args.n_patients_per_proc
     ind = ["Alpha", "Eta", "W", "C"]  # ind specifies which parameters need to be optimized:x ["Alpha", "W", "Gamma", "Zeta", "Eta", "A", "C"]
     inv_list = {"inv14": [20, 23, 27, 30, 33, 37, 40, 43, 47, 50, 53, 57, 60, 200],
                 "inv13": [20, 23, 27, 30, 33, 37, 40, 43, 47, 50, 55, 60, 200],
@@ -113,34 +81,28 @@ def Initialization():
     inv = inv_list[inv_indx]
     n_inv = len(inv)
     
-    if dataset == 'updated_data':
-        data_location = '../../distributed_updated_data/'
-    elif dataset == 'updated_nonzero_data':
-        data_location = '../../distributed_updated_nonzero_data/'
-    elif dataset == 'survey_patient_data':
-        data_location = '../../survey_patient_data/'
+    if dataset == 'data_1000':
+        data_location = '../data/data_1000/'
     else:
         print("dataset {} is not available".format(dataset))
 
-
-    subdata_location = data_location + 'p%s/'%(str(rank_dict[rank]))
-
     # load data
-    times           =  pickle.load(open( subdata_location + 'mcmcPatientTimes', 'r'))          #
-    testTypes       =  pickle.load(open( subdata_location + 'mcmcPatientTestTypes', 'r'))      #
-    observations    =  pickle.load(open( subdata_location + 'mcmcPatientObservations', 'r'))   #
-    regressors      =  pickle.load(open( subdata_location + 'mcmcPatientRegressors', 'r'))     #
-    treatment_indx  =  pickle.load(open( subdata_location + 'mcmcPatientTreatmentIndx', 'r'))           #
-    censor_ages     =  pickle.load(open( subdata_location + 'mcmcPatientCensorDates', 'r'))             #
-    death_states    =  pickle.load(open( subdata_location + 'mcmcPatientDeathStates', 'r'))             #
+    testTypes = pickle.load(open(data_location + "mcmcPatientTestTypes", 'rb'), encoding = "bytes")
+    observations = pickle.load(open(data_location + "mcmcPatientObservations", 'rb'), encoding = "bytes")
+    ages = pickle.load(open(data_location + "mcmcPatientAges", 'rb'), encoding = "bytes")
+    treatment_indx = pickle.load(open(data_location + "mcmcPatientTreatmentIndx", 'rb'), encoding = "bytes")
+    censor_ages = pickle.load(open(data_location + "mcmcPatientCensorDates", 'rb'), encoding = "bytes")
+    death_states = pickle.load(open(data_location + "mcmcPatientDeathStates", 'rb'), encoding = "bytes")
 
-    # Move to outcome dir
-    if not os.path.exists("outcome"):
-        os.makedirs("outcome")
-    os.chdir("outcome")
-    if not os.path.exists(out_folder):
-        os.makedirs(out_folder)
-    os.chdir(out_folder)
+    # Testing data
+    # n_test: number of testing data
+    n_test = 20000
+    testTypes_test = testTypes[-n_test:]
+    observations_test = observations[-n_test:]
+    ages_test = ages[-n_test:]
+    treatment_indx_test = treatment_indx[-n_test:] 
+    censor_ages_test = censor_ages[-n_test:]
+    death_state_test = death_states[-n_test:]
 
     # define Markov Process topology with MPmatrix. The diagonal should be zeros.
     # A one in element (i,j) indicates a possible transition between states i and j.
@@ -150,78 +112,8 @@ def Initialization():
     MPmatrix_1[0,1] = MPmatrix_1[1,0] = MPmatrix_1[1,2] = MPmatrix_1[2,1] = MPmatrix_1[2,3] = MPmatrix_1[:-1,-1] = 1
     MPmatrixs = [MPmatrix_0, MPmatrix_1]
 
-    temp_ages = regressors[1]
-    ages = []
-    # Reset age
-    for temp_patient_ages, patient_times in zip(temp_ages, times):
-        new_patient_ages = temp_patient_ages[0] + patient_times/12.0
-        ages.append(new_patient_ages)
-
-    nPatients = len(times)
-
-    n_patients_per_proc = min(n_patients_per_proc, nPatients)
-    testTypes       =  testTypes[:n_patients_per_proc]
-    observations    =  observations[:n_patients_per_proc]
-    ages            =  ages[:n_patients_per_proc]
-    treatment_indx  =  treatment_indx[:n_patients_per_proc]
-    censor_ages     =  censor_ages[:n_patients_per_proc]
-    death_states    =  death_states[:n_patients_per_proc]
-
-    
-    # If we want to drop patients younger than min_age > 16, do_truncate_ages should be set to True
-    if do_truncate_ages:
-        drop_patient_indx = []
-        for p in xrange(nPatients):
-            keep_obs = ages[p] >= min_age
-            keep_indx = np.where(ages[p] >= min_age)[0]
-
-            if len(keep_indx) > 1:
-                first_indx = keep_indx[0]
-                print 'keep_indx: ', keep_indx
-                print 'first_indx: ', first_indx
-                for ti in sorted(range(len(treatment_indx[p])), reverse=True):
-                    print 'ti: ', ti
-                    print 'treatment_indx[p][ti]: ', treatment_indx[p][ti]
-                    if treatment_indx[p][ti] < first_indx:
-                        del treatment_indx[p][ti]
-                    else:
-                         treatment_indx[p][ti] -= first_indx
-
-                times[p]           =  times[p][keep_obs]
-                testTypes[p]       =  testTypes[p][keep_obs,:]
-                observations[p]    =  observations[p][keep_obs,:,:]
-                ages[p]            =  ages[p][keep_obs]
-
-            else:
-                drop_patient_indx.append(p)
-
-        if len(drop_patient_indx) > 0:
-            for p in sorted(drop_patient_indx, reverse=True):
-                del times[p]
-                del testTypes[p]
-                del observations[p]
-                del ages[p]
-                del treatment_indx[p]
-                del censor_ages[p]
-                del death_states[p]
-
-    print 'original n patients: ', nPatients
-    nPatients = len(ages)
-    print 'Length of times: ', nPatients
-
-    # ### Initialize parameters
-    # currAlpha_0 = [np.zeros([nStates_0,4]), np.zeros([nStates_0,4]), np.zeros([nStates_0, 2])]
-    # currAlpha_1 = [np.zeros([nStates_1,4]), np.zeros([nStates_1,4]), np.zeros([nStates_1, 2])]
-    # currAlpha = [currAlpha_0, currAlpha_1]
-    # currEta_0 = np.zeros([nStates_0,3])
-    # currEta_1 = np.zeros([nStates_1,3])
-    # currEta = [currEta_0, currEta_1]
-    # currW_0 = np.zeros([4, n_inv])
-    # currW_1 = np.zeros([9, n_inv])
-    # currW = [currW_0, currW_1]
-    # currC_0 = np.zeros([nStates_0, n_inv])
-    # currC_1 = np.zeros([nStates_1, n_inv])
-    # currC = [currC_0, currC_1]
+    nPatients_test = len(ages_test)
+    print ('Number of patients for testing: ', nPatients_test)
 
     ### Set informative initial parameters
     temp = 4
@@ -253,201 +145,298 @@ def Initialization():
     currC_1 = np.zeros([nStates_1, n_inv])
     currC = [currC_0, currC_1]    
 
-    currPars = [currAlpha, currEta, currW, currC]
-    curr_parameter_vector = ParList2ParVec(currAlpha, currEta, currW, currC, ind)
-    # currAlpha, currEta, currW, currC = ParVec2ParList(curr_parameter_vector, ind)
-    # print (currAlpha, currEta, currW, currC)
-
     return 0
 
-def ParList2ParVec(Alpha, Eta, W, C, ind): 
-    parameter_vector = np.array([])
+def Load_EM_res(verbose = False):
+    global currPars
+    with open("../res/EM_16_updated_data_inv4_continuous_80000/res".format(str(args.Z_prior)), "rb") as em_res:
+        res = pickle.load(em_res, encoding="bytes")
+    currALpha = res[2]
+    currEta = res[3]
+    currW = res[4]
+    currC = res[5]
+    currPars = [currAlpha, currEta, currW, currC]
+    if verbose:
+        print("EM results have been loaded with Pars: Alpha: {}, Eta: {}, W: {}, C:{}.".format(currAlpha, currEta, currW, currC))
+    return 0
+
+def Compute_pos_Z_test(p, verbose = False): ### given no state Z | -
+    global Z_pos
+    # It is a Bernouli(p)
+
+    ts = time.time()    
+    Z_pos = []
+    for indx in range(nPatients_test):
+        if indx % 100 == 99:
+            print("{}/{} has been completed".format(indx+1, nPatients_test))
+        loglik_0 = Loglikelihood_obs0_test(indx, 0, currPars)
+        loglik_1 = Loglikelihood_obs0_test(indx, 1, currPars)
+        tilde_p = np.exp(np.log(p)+loglik_1 - np.log((1-p)*np.exp(loglik_0) + p*np.exp(loglik_1)))
+        Z_pos.append(tilde_p)
+
+    print('Compute the posterior of Z costs {}s'.format(time.time() - ts))
+    if verbose:
+        for indx in range(nPatients_test):
+            print("Patient {}: model index probabilites: {}".format(indx, Z_pos[indx]))
+    return 0
+
+def Loglikelihood_obs0_test(indx, Z, Pars, verbose = False):
+    Alpha = Pars[0][Z]
+    Eta = Pars[1][Z]
+    W = Pars[2][Z]
+    C = Pars[3][Z]
+    MPmatrix = MPmatrixs[Z]
+
+    patient_ages = ages_test[indx]
+    patient_tests = testTypes_test[indx]
+    patient_observations = observations_test[indx]
+    patient_treatment_indx = treatment_indx_test[indx]
+    patient_censor_age = censor_ages_test[indx]
+    patient_death_state = death_state_test[indx]
+
+    if len(patient_treatment_indx) == 1:
+        j = patient_treatment_indx[0]
+        loglik0 = Loglikelihood_group_obs0(patient_tests[:(j+1)], patient_observations[:(j+1)], patient_ages[:(j+1)], 0, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
+        if j < (len(patient_ages) - 1):
+            loglik1= Loglikelihood_group_obs0(patient_tests[j:-1], patient_observations[j:-1], patient_ages[j:-1], 1, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
+        else:
+            loglik1= 0
+        loglik = loglik0 + loglik1
+    elif len(patient_treatment_indx) > 1:
+        loglik = 0
+        j = patient_treatment_indx[0]
+        loglik0 = Loglikelihood_group_obs0(patient_tests[:(j+1)], patient_observations[:(j+1)], patient_ages[:(j+1)], 0, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
+        loglik += loglik0
+        for i in range(len(patient_treatment_indx)-1):
+            j = patient_treatment_indx[i]
+            k = patient_treatment_indx[i+1] + 1
+            logliki= Loglikelihood_group_obs0(patient_tests[j:k], patient_observations[j:k], patient_ages[j:k], 1, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
+            loglik += logliki
+        j = patient_treatment_indx[-1]
+        if j < (len(patient_ages) - 1):
+            loglik1= Loglikelihood_group_obs0(patient_tests[j:-1], patient_observations[j:-1], patient_ages[j:-1], 1, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
+        else:
+            loglik1= 0
+        loglik += loglik1
+    else:
+        loglik = Loglikelihood_group_obs0(patient_tests[:-1], patient_observations[:-1], patient_ages[:-1], 0, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
+    return loglik    
+
+def Loglikelihood_group_obs0(patient_tests, patient_observations, patient_ages, patient_treatment_status, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose = False, do_last = False):
+    if Z == 0:
+        nStates = 2
+    else:
+        nStates = 4
+    MPmatrix = MPmatrixs[Z]
+
+    nvisits = len(patient_ages)
+    ### Initialization ###
+    ### Q[s] ~ Pr[S0=s, O0]
+    Q = np.zeros(nStates)
+    patient_age = patient_ages[0]
+    patient_test = patient_tests[0]
+    patient_observation = patient_observations[0]
+    if patient_treatment_status == 0:
+        for s in range(nStates):
+            Q[s] = np.log(ddirichlet_categorical(s,np.exp(C[:, Age2Comp(patient_age, inv)])))
+            # Q[s] = np.log(C[s, Age2Comp(patient_age, inv)])
+            Q[s] += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[s,:])))
+            # Q[s] += np.sum(stats.poisson.logpmf(patient_test, Eta[s,:]))
+            for k in range(nTests):
+                if k == 2:
+                    # Q[s] += multinomial_logpmf(patient_observations[0][k, :2], Alpha[k][s, :])
+                    Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[0][k,:2], np.exp(Alpha[k][s,:])))
+                else:
+                    # Q[s] += multinomial_logpmf(patient_observations[0][k, :], Alpha[k][s, :])
+                    Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[0][k,:], np.exp(Alpha[k][s,:])))
+            # P(S0, O0)
+        Q = np.exp(Q)
+    else:
+        Q[0] = 1
+    log_Q = np.log(Q)
+
+    ####################
+    ### Forward Pass ###
+    ####################
+    # P_forward_matrices P(Sj-1, Sj, O0-j)
+    P_forward_matrices = [ np.zeros([nStates, nStates]) for patient_age in patient_ages]
+    for j in range(1, nvisits):
+        p_transition = ProbTransition(MPmatrix, W, patient_ages[j-1], patient_ages[j], inv)
+        log_prob_obs = np.zeros(nStates)
+        for s in range(nStates):
+            log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], np.exp(Eta[s,:])))
+            # log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], Eta[s,:]))
+            for k in range(nTests):
+                if k == 2:
+                    # log_prob_obs[s] += multinomial_logpmf(patient_observations[j][k, :2], Alpha[k][s, :])
+                    log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:2], np.exp(Alpha[k][s,:])))               
+                else:
+                    # log_prob_obs[s] += multinomial_logpmf(patient_observations[j][k, :], Alpha[k][s, :])
+                    log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:], np.exp(Alpha[k][s,:])))
+        
+        log_P_forward_matrix = np.repeat(log_Q,nStates).reshape([nStates,nStates]) + np.transpose(np.repeat(log_prob_obs,nStates).reshape([nStates,nStates])) + np.log(p_transition[:nStates,:nStates])
+        P_forward_matrix = np.exp(log_P_forward_matrix)
+        #
+        P_forward_matrices[j] = P_forward_matrix
+        #
+        Q = np.sum(P_forward_matrix,0)/np.sum(P_forward_matrix)
+        log_Q = np.log(Q)
+
+    ## P(S_T, O)
+    if nvisits > 1: 
+        PP = np.sum(P_forward_matrices[nvisits-1], 0)
+    else:
+        PP = Q
+    log_PP = np.log(PP)
+
+    # print ("P_forward_matrices", P_forward_matrices)
+    # print ("log_PP", log_PP)
+
+    ## P(S_T, S_last, O)
+    if do_last:
+        # Add the censor statue
+        if patient_censor_age < patient_ages[-1]:
+        # this can happen due to some rounding errors when death is very close to last screening.
+        # Just move the censor date a few month after last visit.
+            patient_censor_age = patient_ages[-1] + 0.25
+        p_transition = ProbTransition(MPmatrix, W, patient_ages[-1], patient_censor_age, inv)
+        if patient_death_state > 0: # this means censor age is age of 'death', not end of observations.
+            log_PP += np.log(p_transition[:nStates,-1])
+        else: # this means censor age is age of end of observations, not 'death'. So we know they are still alive at the time the study ended.
+            log_PP += np.log(1. - p_transition[:nStates,-1])
+
+    # print ("log_PP", log_PP)
+
+    return np.log(np.sum(np.exp(log_PP)))
+
+def Compute_pos_last2(Pars, verbose = False):
+    global last2s
+
+    ts = time.time()
+    last2s = []
+    for indx in range(nPatients_test):
+        last2 = last2_z(indx, Pars, verbose=False)
+        # print(last2_z0.sum(), last2_z1.sum())
+        last2s.append(last2)
+    # print(last2s)
+    print('Compute the predictive distrubution of S*_I costs {}s'.format(time.time() - ts))
+    return 0
+
+def last2_z(indx, Pars, verbose = False):
+    Alpha = Pars[0]
+    Eta = Pars[1]
+    W = Pars[2]
+    C = Pars[3]
+    Z = 1
+
+    patient_ages = ages_test[indx]
+    patient_tests = testTypes_test[indx]
+    patient_observations = observations_test[indx]
+    patient_treatment_indx = treatment_indx_test[indx]
+    patient_censor_age = censor_ages_test[indx]
+    patient_death_state = death_state_test[indx]
+
+    if len(patient_treatment_indx) >= 1:
+        j = patient_treatment_indx[-1]
+        res = prob_last2_z_group(patient_tests[:-1], patient_observations[:-1], patient_ages[:-1], 1, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
+    else:
+        res = prob_last2_z_group(patient_tests[:-1], patient_observations[:-1], patient_ages[:-1], 0, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
+     
+    if verbose:
+        print(indx, patient_treatment_indx, patient_tests[:-1], patient_observations[:-1], patient_ages[:-1], patient_censor_age, patient_death_state)
+
+    return res    
+
+def prob_last2_z_group(patient_tests, patient_observations, patient_ages, patient_treatment_status, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose = False):
+    if Z == 0:
+        nStates = 2
+    else:
+        nStates = 4
+    MPmatrix = MPmatrixs[Z]
+
+    nvisits = len(patient_ages)
+    ### Initialization ###
+    ### Q[s] ~ Pr[S0=s, O0]
+    Q = np.zeros(nStates)
+    patient_age = patient_ages[0]
+    patient_test = patient_tests[0]
+    patient_observation = patient_observations[0]
+    if patient_treatment_status == 0:
+        for s in range(nStates):
+            Q[s] = np.log(ddirichlet_categorical(s,np.exp(C[:, Age2Comp(patient_age, inv)])))
+            # Q[s] = np.log(C[s, Age2Comp(patient_age, inv)])
+            Q[s] += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[s,:])))
+            # Q[s] += np.sum(stats.poisson.logpmf(patient_test, Eta[s,:]))
+            for k in range(nTests):
+                if k == 2:
+                    # Q[s] += multinomial_logpmf(patient_observations[0][k, :2], Alpha[k][s, :])
+                    Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[0][k,:2], np.exp(Alpha[k][s,:])))
+                else:
+                    # Q[s] += multinomial_logpmf(patient_observations[0][k, :], Alpha[k][s, :])
+                    Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[0][k,:], np.exp(Alpha[k][s,:])))
+            # P(S0, O0)
+        Q = np.exp(Q)
+    else:
+        Q[0] = 1
+    log_Q = np.log(Q)
+
+    ####################
+    ### Forward Pass ###
+    ####################
+    # P_forward_matrices P(Sj-1, Sj, O0-j)
+    P_forward_matrices = [ np.zeros([nStates, nStates]) for patient_age in patient_ages]
+    for j in range(1, nvisits):
+        p_transition = ProbTransition(MPmatrix, W, patient_ages[j-1], patient_ages[j], inv)
+        log_prob_obs = np.zeros(nStates)
+        for s in range(nStates):
+            log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], np.exp(Eta[s,:])))
+            # log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], Eta[s,:]))
+            for k in range(nTests):
+                if k == 2:
+                    # log_prob_obs[s] += multinomial_logpmf(patient_observations[j][k, :2], Alpha[k][s, :])
+                    log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:2], np.exp(Alpha[k][s,:])))               
+                else:
+                    # log_prob_obs[s] += multinomial_logpmf(patient_observations[j][k, :], Alpha[k][s, :])
+                    log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:], np.exp(Alpha[k][s,:])))
+        
+        log_P_forward_matrix = np.repeat(log_Q,nStates).reshape([nStates,nStates]) + np.transpose(np.repeat(log_prob_obs,nStates).reshape([nStates,nStates])) + np.log(p_transition[:nStates,:nStates])
+        P_forward_matrix = np.exp(log_P_forward_matrix)
+        P_forward_matrices[j] = P_forward_matrix
+        Q = np.sum(P_forward_matrix,0)/np.sum(P_forward_matrix)
     
-    if "Alpha" in ind:
-        Alpha_vec = np.array([par for Alphai in Alpha for Alphaij in Alphai for par in Alphaij.reshape(-1)])
-        parameter_vector = np.append(parameter_vector, Alpha_vec)
-    if "Eta" in ind: 
-        Eta_vec = np.array([par for Etai in Eta for par in Etai.reshape(-1)])
-        parameter_vector = np.append(parameter_vector ,Eta_vec)
-    if "W" in ind:
-        W_vec = np.array([par for Wi in W for par in Wi.reshape(-1)])
-        parameter_vector = np.append(parameter_vector, W_vec)
-    if "C" in ind:
-        C_vec = np.array([par for Ci in C for par in Ci.reshape(-1)])
-        parameter_vector = np.append(parameter_vector, C_vec)
-    return (parameter_vector)
+    if nvisits == 1:
+        Q /= Q.sum()
 
-def ParList2ParVec_group(Alpha, Eta, W, C, ind):
-    parameter_vector = np.array([])
-    
-    if "Alpha" in ind:
-        Alpha_vec = np.array([par for Alphaj in Alpha for par in Alphaj.reshape(-1)])
-        parameter_vector = np.append(parameter_vector, Alpha_vec)
-    if "Eta" in ind: 
-        Eta_vec = np.array([par for par in Eta.reshape(-1)])
-        parameter_vector = np.append(parameter_vector ,Eta_vec)
-    if "W" in ind:
-        W_vec = np.array([par for par in W.reshape(-1)])
-        parameter_vector = np.append(parameter_vector, W_vec)
-    if "C" in ind:
-        C_vec = np.array([par for par in C.reshape(-1)])
-        parameter_vector = np.append(parameter_vector, C_vec)
-    return (parameter_vector)
+    return Q
 
-def ParVec2ParList(parameter_vector, n_inv, ind):
-    s = 0
-    if "Alpha" in ind:
-        Alpha_vec = parameter_vector[s: s+60]
-        s += 60
-        Alpha0 = Alpha_vec[:20]
-        Alpha1 = Alpha_vec[-40:]
-        Alpha = [[Alpha0[0:8].reshape(2,4), Alpha0[8:16].reshape(2,4), Alpha0[16:20].reshape(2,2)], [Alpha1[:16].reshape(4,4), Alpha1[16:32].reshape(4,4), Alpha1[32:40].reshape(4,2)]]
-    else:
-        Alpha = currPars[0]
-    if "Eta" in ind:
-        Eta_vec = parameter_vector[s:s+18]
-        s += 18
-        Eta0 = Eta_vec[:6]
-        Eta1 = Eta_vec[-12:]
-        Eta = [Eta0.reshape(2,3), Eta1.reshape(4,3)]
-    else:
-        Eta = currPars[1]
-    if "W" in ind:
-        W_vec = parameter_vector[s: s+13*n_inv]
-        s += 13 * n_inv
-        W0 = W_vec[:4*n_inv]
-        W1 = W_vec[-9*n_inv:]
-        W = [W0.reshape(4, n_inv), W1.reshape(9, n_inv)]
-    else:
-        W = currPars[2]
-    if "C" in ind:
-        C_vec = parameter_vector[s: s+6*n_inv]
-        s += 6*n_inv
-        C0 = C_vec[:2*n_inv]
-        C1 = C_vec[-4*n_inv:]
-        C = [C0.reshape(2, n_inv), C1.reshape(4, n_inv)]
-    else:
-        C = currPars[3]
-    return Alpha, Eta, W, C
+def Compute_pos_last(Pars, verbose = False):
+    global lasts 
 
-def ParVecShared2ParVec(parameter_vector_shared, n_inv, ind):
-    parameter_vector = np.array([])
-    s = 0
-    if "Alpha" in ind:
-        Alpha_vec_shared = parameter_vector_shared[s: s+40]
-        s += 40
-        Alpha1 = Alpha_vec_shared
-        Alpha0 = np.concatenate([Alpha1[:8], Alpha1[16:24], Alpha1[32:36]])
-        Alpha_vec = np.append(Alpha0, Alpha1)
-        parameter_vector = np.append(parameter_vector, Alpha_vec)
-    if "Eta" in ind:
-        Eta_vec_shared = parameter_vector_shared[s: s+12]
-        s += 12
-        Eta1 = Eta_vec_shared
-        Eta0 = Eta1[:6]
-        Eta_vec = np.append(Eta0, Eta1)
-        parameter_vector = np.append(parameter_vector, Eta_vec)
-    if "W" in ind:
-        W_vec = parameter_vector_shared[s: s+13*n_inv]
-        s += 13 * n_inv
-        parameter_vector = np.append(parameter_vector, W_vec)
-    if "C" in ind:
-        C_vec = parameter_vector_shared[s: s+6*n_inv]
-        s += 6 * n_inv
-        parameter_vector = np.append(parameter_vector, C_vec)
+    ts = time.time()
+    lasts = []
+    Z = 1
+    W1 = Pars[2]
+    MPmatrix1 = MPmatrixs[Z]
 
-    return parameter_vector
+    for indx in range(nPatients_test):
+        last2_z1 = last2s[indx]
+        patient_ages = ages_test[indx]
 
-def ParVec2ParVecShared(parameter_vector, n_inv, ind):
-    parameter_vector_shared = np.array([])
-    s = 0
-    if "Alpha" in ind:
-        Alpha_vec = parameter_vector[s: s+60]
-        s += 60
-        Alpha0 = Alpha_vec[:20]
-        Alpha1 = Alpha_vec[-40:]
-        Alpha_vec_shared = Alpha1
-        parameter_vector_shared = np.append(parameter_vector_shared, Alpha_vec_shared)
-    if "Eta" in ind:
-        Eta_vec = parameter_vector[s: s+18]
-        s += 18
-        Eta0 = Eta_vec[:6]
-        Eta1 = Eta_vec[-12:]
-        Eta_vec_shared = Eta1
-        parameter_vector_shared = np.append(parameter_vector_shared, Eta_vec_shared)
-    if "W" in ind:
-        W_vec = parameter_vector[s: s+13*n_inv]
-        s += 13 * n_inv
-        parameter_vector_shared = np.append(parameter_vector_shared, W_vec)
-    if "C" in ind:
-        C_vec = parameter_vector[s: s+6*n_inv]
-        s += 6 * n_inv
-        parameter_vector_shared = np.append(parameter_vector_shared, C_vec)
-
-    return parameter_vector_shared
-
-def ParVec2ParList_group(Z, parameter_vector, n_inv, ind):
-    s = 0
-    if "Alpha" in ind:
-        if Z == 0:
-            n_Alpha = 20
-        else:
-            n_Alpha = 40
-        Alpha_vec = parameter_vector[s: s+n_Alpha]
-        s += n_Alpha
-        if Z == 0:
-            Alpha = [Alpha_vec[0:8].reshape(2,4), Alpha_vec[8:16].reshape(2,4), Alpha_vec[16:20].reshape(2,2)]
-        else:
-            Alpha = [Alpha_vec[:16].reshape(4,4), Alpha_vec[16:32].reshape(4,4), Alpha_vec[32:40].reshape(4,2)]
-    if "Eta" in ind:
-        if Z == 0:
-            n_states = 2
-        else:
-            n_states = 4
-        Eta_vec = parameter_vector[s:s+n_states*3]
-        s += n_states*3
-        Eta = Eta_vec.reshape(n_states,3)
-    if "W" in ind:
-        if Z == 0:
-            n_tran = 4
-        else:
-            n_tran = 9
-        W_vec = parameter_vector[s: s+n_tran*n_inv]
-        s += n_tran * n_inv
-        W = W_vec.reshape(n_tran, n_inv)
-    if "C" in ind:
-        if Z == 0:
-            n_states = 2
-        else:
-            n_states = 4
-        C_vec = parameter_vector[s: s+n_states*n_inv]
-        s += n_states*n_inv
-        C = C_vec.reshape(n_states, n_inv)
-    return Alpha, Eta, W, C
-
-def ddirichlet_mutilnominal(x, alpha):
-    n = np.sum(x)
-    alpha0 = sum(alpha)
-    if n == 0:
-        return 1
-    else:
-        return n*special.beta(alpha0,n)/np.prod(np.array([special.beta(alphak, xk)*xk for alphak, xk in zip(alpha, x) if xk > 0]))
-
-def ddirichlet_categorical(k, alpha):
-    alpha0 = sum(alpha)
-    res = special.beta(alpha0, 1)/special.beta(alpha[k], 1)
-    return res
-
-def Age2Comp(age, inv): # This function is to specify the intensity component for the certain age(value) and certain transition index.  Interval looks like [ ).
-    temp = 0
-    while age >= inv[temp]:
-        temp += 1
-    return (temp)
-
-def Softmax(x):
-    """Compute softmax values for each sets of scores in x."""
-    e_x = np.exp(x - np.max(x))
-    return e_x / np.sum(e_x)
+        # compute S_I+1|z=1, O*, hat_psi
+        p_transition = ProbTransition(MPmatrix1, W1, patient_ages[-2], patient_ages[-1], inv)
+        P_transition = p_transition[:-1, :-1]
+        P_transition /= P_transition.sum(axis = 1)[:,None]
+        last_z1 = last2_z1.dot(P_transition) # dim 4
+        
+        if verbose:
+            print("{}th patient, last2_z1: {}, last_z1: {}".format(indx, last2_z1, last_z1))
+        
+        last = last_z1
+        lasts.append(last)
+    if verbose:
+        for indx in range(nPatients_test):
+            print("{}th patient, state probs: {}, res: {}".format(indx, lasts[indx], observations_test[indx][-1]))
+    print("Compute the last state probability costs {}s".format(time.time()-ts))
 
 def ProbTransition_interval(MPmatrix, dt, W):
     '''
@@ -462,69 +451,21 @@ def ProbTransition_interval(MPmatrix, dt, W):
         '''
     matrix = np.array(MPmatrix,copy=True)
     
-    if model == 'continuous':
-        if autograd_optim:
-            matrix_filled = []
-            indx = 0
-            indx_row = -1
-            for row in matrix:
-                temp_row = []
-                indx_row += 1
-                for col in row:
-                    if col > 0:
-                        temp_row.append(np.exp(W)[indx])
-                        indx += 1
-                    else:
-                        temp_row.append(0)
-                temp_row[indx_row] = -sum(temp_row)
-                matrix_filled.append(temp_row)
-            out = expm(dt*np.array(matrix_filled))
-        else:
-            matrix_filled = np.zeros_like(matrix, dtype=np.float32)
-            matrix_filled[np.where(matrix > 0)] = np.exp(W)
-            for i in xrange(matrix.shape[0]):
-                matrix_filled[i,i] = - np.sum(matrix_filled[i,:])
-            out = expm(dt*matrix_filled)  # so far so good...
+    if model == 'continuous':    
+        matrix_filled = np.zeros_like(matrix, dtype=np.float32)
+        matrix_filled[np.where(matrix > 0)] = np.exp(W)
+        for i in range(matrix.shape[0]):
+            matrix_filled[i,i] = - np.sum(matrix_filled[i,:])
+        out = expm(dt*matrix_filled)  # so far so good...
     elif model == 'discrete':
-        if autograd_optim:
-            n_dim = matrix.shape[0]
-            np.fill_diagonal(matrix, -1)
-            matrix_filled = []
-            indx = 0
-            indx_row = -1
-            for row in matrix:
-                temp_row = []
-                temp_row0 = []
-                indx_row0 = 0
-                indx_row += 1
-                for col in row:
-                    if col == 1:
-                        temp_row0.append(W[indx])
-                        indx += 1
-                    if col == -1:
-                        temp_row0.append(0)
-                temp_row0 = Softmax(np.array(temp_row0))
-                # print (row, W, temp_row0)
-                for col in row:
-                    if col == 0:
-                        temp_row.append(0)
-                    else:
-                        temp_row.append(temp_row0[indx_row0])
-                        indx_row0 += 1
-                matrix_filled.append(temp_row)
-            out = np.eye(n_dim)
-            for i in range(int(round(dt*12)) if int(round(dt*12)) > 0 else 1):
-                out = np.matmul(out, np.array(matrix_filled))
-            # out = np.linalg.matrix_power(np.array(matrix_filled), int(round(dt*12)) if int(round(dt*12)) > 0 else 1) # Assume the screening interval is at least one month
-        else:
-            n_dim = MPmatrix.shape[0]
-            matrix_filled = np.zeros_like(matrix, dtype=np.float32)
-            matrix_filled[np.where(matrix == 1)] = W
-            np.fill_diagonal(matrix, 1)
-            matrix = np.matmul(np.diag(1 + np.arange(n_dim)), matrix)
-            for indx_row in range(n_dim):
-                matrix_filled[np.where(matrix == 1+indx_row)] = Softmax(matrix_filled[np.where(matrix == 1+indx_row)])
-            out = np.linalg.matrix_power(matrix_filled, int(round(dt*12)) if int(round(dt*12)) > 0 else 1) # Assume the screening interval is at least one month
+        n_dim = MPmatrix.shape[0]
+        matrix_filled = np.zeros_like(matrix, dtype=np.float32)
+        matrix_filled[np.where(matrix == 1)] = W
+        np.fill_diagonal(matrix, 1)
+        matrix = np.matmul(np.diag(1 + np.arange(n_dim)), matrix)
+        for indx_row in range(n_dim):
+            matrix_filled[np.where(matrix == 1+indx_row)] = Softmax(matrix_filled[np.where(matrix == 1+indx_row)])
+        out = np.linalg.matrix_power(matrix_filled, int(round(dt*12)) if int(round(dt*12)) > 0 else 1) # Assume the screening interval is at least one month
 
     # Normalize the probablity matrix
     out = np.where(out < 0, 0., out)
@@ -570,6 +511,31 @@ def ProbTransition(MPmatrix, W, start, end, inv):
     norm = np.repeat(np.sum(out,1),out.shape[0]).reshape(out.shape)
     out = out/norm
     return out
+
+def Softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    e_x = np.exp(x - np.max(x))
+    return e_x / np.sum(e_x)
+
+def ddirichlet_mutilnominal(x, alpha):
+    n = np.sum(x)
+    alpha0 = sum(alpha)
+    if n == 0:
+        return 1
+    else:
+        return n*special.beta(alpha0,n)/np.prod(np.array([special.beta(alphak, xk)*xk for alphak, xk in zip(alpha, x) if xk > 0]))
+
+def ddirichlet_categorical(k, alpha):
+    alpha0 = sum(alpha)
+    res = special.beta(alpha0, 1)/special.beta(alpha[k], 1)
+    return res
+
+def Age2Comp(age, inv): # This function is to specify the intensity component for the certain age(value) and certain transition index.  Interval looks like [ ).
+    temp = 0
+    while age >= inv[temp]:
+        temp += 1
+    return (temp)
+
 
 # Joint loglikelihood of both observations and corresponding states
 def Loglikelihood(indx, Z, States, Pars, verbose = False):
@@ -619,17 +585,17 @@ def Loglikelihood_group (indx, patient_states, Alpha, Eta, W, C, MPmatrix, verbo
     loglikelihood = np.log(ddirichlet_categorical(patient_state, np.exp(C[:, Age2Comp(patient_age, inv)])))
     ### Loglikelihood for the obseration of the first state
     loglikelihood += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[patient_state,:])))
-    for k in xrange(nTests):
+    for k in range(nTests):
         if k == 2:
             loglikelihood += np.log(ddirichlet_mutilnominal(patient_observation[k,:2], np.exp(Alpha[k][patient_state,:])))
         else:
             loglikelihood += np.log(ddirichlet_mutilnominal(patient_observation[k,:], np.exp(Alpha[k][patient_state,:])))
     
     if verbose:
-        print "1", loglikelihood
+        print ("1", loglikelihood)
 
     ### 
-    for j in xrange(1, len(patient_ages)):
+    for j in range(1, len(patient_ages)):
         patient_state = patient_states[j]
         patient_age = patient_ages[j]
         patient_observation = patient_observations[j]
@@ -651,22 +617,22 @@ def Loglikelihood_group (indx, patient_states, Alpha, Eta, W, C, MPmatrix, verbo
 
 
         if verbose:
-            print "2.1", loglikelihood
+            print ("2.1", loglikelihood)
 
         #### observation likelihood
         loglikelihood += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[patient_state,:])))
 
         if verbose:
-            print "2.2", loglikelihood
+            print ("2.2", loglikelihood)
 
-        for k in xrange(nTests):
+        for k in range(nTests):
             if k == 2:
                 loglikelihood += np.log(ddirichlet_mutilnominal(patient_observation[k,:2], np.exp(Alpha[k][patient_state,:])))
             else:
                 loglikelihood += np.log(ddirichlet_mutilnominal(patient_observation[k,:], np.exp(Alpha[k][patient_state,:])))
  
         if verbose:
-            print "2.3", loglikelihood    
+            print ("2.3", loglikelihood)    
 
     if censor_age < patient_ages[-1]:
         # this can happen due to some rounding errors when death is very close to last screening.
@@ -695,12 +661,12 @@ def Loglikelihood_group (indx, patient_states, Alpha, Eta, W, C, MPmatrix, verbo
     #     pdb.set_trace()
 
     if verbose:
-        print MPmatrix
-        print W
-        print patient_ages[-1]
-        print censor_age
-        print inv
-        print "2.3", loglikelihood
+        print (MPmatrix)
+        print (W)
+        print (patient_ages[-1])
+        print (censor_age)
+        print (inv)
+        print ("2.3", loglikelihood)
             
     return loglikelihood
 
@@ -715,7 +681,7 @@ def Loglikelihood_group_states (indx, patient_states, Alpha, Eta, W, C, MPmatrix
     patient_age = patient_ages[0]
     loglikelihood = np.log(ddirichlet_categorical(patient_state, np.exp(C[:, Age2Comp(patient_age, inv)])))
 
-    for j in xrange(1, len(patient_ages)):
+    for j in range(1, len(patient_ages)):
         patient_state = patient_states[j]
         patient_age = patient_ages[j]
         #### transition probability
@@ -726,7 +692,7 @@ def Loglikelihood_group_states (indx, patient_states, Alpha, Eta, W, C, MPmatrix
             loglikelihood += np.log(p_transition[patient_states[j-1], patient_state])
 
         if verbose:
-            print "1", loglikelihood
+            print ("1", loglikelihood)
             
     return loglikelihood
 
@@ -739,7 +705,7 @@ def Loglikelihood_group_obs(indx, patient_states, Alpha, Eta, W, C, MPmatrix, ve
     death_state = death_states[indx]
     ### 
     loglikelihood = 0
-    for j in xrange(len(patient_ages)):
+    for j in range(len(patient_ages)):
         patient_state = patient_states[j]
         patient_age = patient_ages[j]
         patient_observation = patient_observations[j]
@@ -749,16 +715,16 @@ def Loglikelihood_group_obs(indx, patient_states, Alpha, Eta, W, C, MPmatrix, ve
         loglikelihood += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[patient_state,:])))
 
         if verbose:
-            print "2.2", loglikelihood
+            print ("2.2", loglikelihood)
 
-        for k in xrange(nTests):
+        for k in range(nTests):
             if k == 2:
                 loglikelihood += np.log(ddirichlet_mutilnominal(patient_observation[k,:2], np.exp(Alpha[k][patient_state,:])))
             else:
                 loglikelihood += np.log(ddirichlet_mutilnominal(patient_observation[k,:], np.exp(Alpha[k][patient_state,:])))
  
         if verbose:
-            print "2.3", loglikelihood    
+            print ("2.3", loglikelihood)    
 
     if censor_age < patient_ages[-1]:
         # this can happen due to some rounding errors when death is very close to last screening.
@@ -792,12 +758,12 @@ def Best_Patient_States_Viterbi(Z, MPmatrix, patient_tests, patient_observations
     patient_observation = patient_observations[0]
     Q = np.repeat(-np.infty, nStates) # temporary iterm
     if patient_treatment_status == 0:
-        for s in xrange(nStates):
+        for s in range(nStates):
             # log(P(S0))
             Q[s] = np.log(ddirichlet_categorical(s,np.exp(C[:, Age2Comp(patient_age, inv)])))
             # log(P(O0,S0)) = log(O0|S0)+log(S0)
             Q[s] += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[s,:])))
-            for k in xrange(nTests):
+            for k in range(nTests):
                 if k == 2:
                     Q[s] += np.log(ddirichlet_mutilnominal(patient_observation[k,:2], np.exp(Alpha[k][s,:])))
                 else:
@@ -810,12 +776,12 @@ def Best_Patient_States_Viterbi(Z, MPmatrix, patient_tests, patient_observations
     ######################
     ### Recursion Pass ###
     ######################
-    for j in xrange(1, nvisits):
+    for j in range(1, nvisits):
         p_transition = ProbTransition(MPmatrix, W, patient_ages[j-1], patient_ages[j], inv)
         log_prob_obs = np.zeros(nStates)
-        for s in xrange(nStates):
+        for s in range(nStates):
             log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], np.exp(Eta[s,:])))
-            for k in xrange(nTests):
+            for k in range(nTests):
                 if k == 2:
                     log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:2], np.exp(Alpha[k][s,:])))
                 else:
@@ -824,9 +790,9 @@ def Best_Patient_States_Viterbi(Z, MPmatrix, patient_tests, patient_observations
         log_proportional_prob = np.repeat(V[j-1,:],nStates).reshape([nStates,nStates]) + np.transpose(np.repeat(log_prob_obs,nStates).reshape([nStates,nStates])) + np.log(p_transition[:nStates,:nStates])
         
         if verbose:
-            print "2.1", p_transition
-            print "2.2", log_prob_obs
-            print "2.3", log_proportional_prob
+            print ("2.1", p_transition)
+            print ("2.2", log_prob_obs)
+            print ("2.3", log_proportional_prob)
             
 
         if j == nvisits - 1 and do_last:
@@ -844,10 +810,10 @@ def Best_Patient_States_Viterbi(Z, MPmatrix, patient_tests, patient_observations
             log_proportional_prob = np.where(log_proportional_prob != log_proportional_prob, -np.infty, log_proportional_prob)
 
             if verbose:
-                print "2.4", log_proportional_prob
+                print ("2.4", log_proportional_prob)
 
 
-        for s in xrange(nStates):
+        for s in range(nStates):
             V[j, s] = np.max(log_proportional_prob[:, s])
             B[j, s] = np.argmax(log_proportional_prob[:, s])
 
@@ -867,7 +833,7 @@ def Best_Patient_States_Viterbi(Z, MPmatrix, patient_tests, patient_observations
             V[0, :] += np.log(1. - p_transition[:nStates,-1])
 
         if verbose:
-            print "2.4", V[0, :]
+            print ("2.4", V[0, :])
 
         return np.array([np.argmax(V[0, :])]), np.max(V[0, :])      
 
@@ -880,7 +846,7 @@ def Best_Patient_States_Viterbi(Z, MPmatrix, patient_tests, patient_observations
         best_states[-1] = np.argmax(V[0, :])
     else:
         best_states[-1] = np.argmax(V[-1, :])
-        for j in xrange(nvisits-1):    
+        for j in range(nvisits-1):    
             best_states[-j-2] = (B[-j-1, best_states[-j-1]])
 
     if verbose:
@@ -901,12 +867,12 @@ def Best_Patient_States_Viterbi0(Z, MPmatrix, patient_ages, patient_treatment_st
     patient_age = patient_ages[0]
     Q = np.repeat(-np.infty, nStates) # temporary iterm
     if patient_treatment_status == 0:
-        for s in xrange(nStates):
+        for s in range(nStates):
             # log(P(S0))
             Q[s] = np.log(ddirichlet_categorical(s,np.exp(C[:, Age2Comp(patient_age, inv)])))
             # # log(P(O0,S0)) = log(O0|S0)+log(S0)
             # Q[s] += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[s,:])))
-            # for k in xrange(nTests):
+            # for k in range(nTests):
             #     if k == 2:
             #         Q[s] += np.log(ddirichlet_mutilnominal(patient_observation[k,:2], np.exp(Alpha[k][s,:])))
             #     else:
@@ -919,12 +885,12 @@ def Best_Patient_States_Viterbi0(Z, MPmatrix, patient_ages, patient_treatment_st
     ######################
     ### Recursion Pass ###
     ######################
-    for j in xrange(1, nvisits):
+    for j in range(1, nvisits):
         p_transition = ProbTransition(MPmatrix, W, patient_ages[j-1], patient_ages[j], inv)
         # log_prob_obs = np.zeros(nStates)
-        # for s in xrange(nStates):
+        # for s in range(nStates):
         #     log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], np.exp(Eta[s,:])))
-        #     for k in xrange(nTests):
+        #     for k in range(nTests):
         #         if k == 2:
         #             log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:2], np.exp(Alpha[k][s,:])))
         #         else:
@@ -957,7 +923,7 @@ def Best_Patient_States_Viterbi0(Z, MPmatrix, patient_ages, patient_treatment_st
         #         print "2.4", log_proportional_prob
 
 
-        for s in xrange(nStates):
+        for s in range(nStates):
             V[j, s] = np.max(log_proportional_prob[:, s])
             B[j, s] = np.argmax(log_proportional_prob[:, s])
 
@@ -990,7 +956,7 @@ def Best_Patient_States_Viterbi0(Z, MPmatrix, patient_ages, patient_treatment_st
         best_states[-1] = np.argmax(V[0, :])
     else:
         best_states[-1] = np.argmax(V[-1, :])
-        for j in xrange(nvisits-1):    
+        for j in range(nvisits-1):    
             best_states[-j-2] = (B[-j-1, best_states[-j-1]])
 
     if verbose:
@@ -1012,12 +978,12 @@ def Best_Patient_States(Z, MPmatrix, patient_tests, patient_observations, patien
     patient_test = patient_tests[0]
     patient_observation = patient_observations[0]
     if patient_treatment_status == 0:
-        for s in xrange(nStates):
+        for s in range(nStates):
             # log(P(S0))
             Q[s] = np.log(ddirichlet_categorical(s,np.exp(C[:, Age2Comp(patient_age, inv)])))
             # log(P(O0,S0)) = log(O0|S0)+log(S0)
             Q[s] += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[s,:])))
-            for k in xrange(nTests):
+            for k in range(nTests):
                 if k == 2:
                     Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:2], np.exp(Alpha[k][s,:])))
                 else:
@@ -1033,12 +999,12 @@ def Best_Patient_States(Z, MPmatrix, patient_tests, patient_observations, patien
     ####################
     # P_forward_matrices P(Sj-1, Sj|Oj)
     P_forward_matrices = [ np.zeros([nStates, nStates]) for patient_age in patient_ages]
-    for j in xrange(1,len(patient_ages)):
+    for j in range(1,len(patient_ages)):
         p_transition = ProbTransition(MPmatrix, W, patient_ages[j-1], patient_ages[j], inv)
         log_prob_obs = np.zeros(nStates)
-        for s in xrange(nStates):
+        for s in range(nStates):
             log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], np.exp(Eta[s,:])))
-            for k in xrange(nTests):
+            for k in range(nTests):
                 if k == 2:
                     log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observation[k,:2], np.exp(Alpha[k][s,:])))
                 else:
@@ -1062,7 +1028,7 @@ def Best_Patient_States(Z, MPmatrix, patient_tests, patient_observations, patien
         maxindex = np.unravel_index(P_forward_matrices[-1].argmax(),P_forward_matrices[-1].shape)
         best_states[-1] = maxindex[1]
         best_states[-2] = maxindex[0]
-    for j in xrange(2,nvisits):
+    for j in range(2,nvisits):
         best_states[-j-1] = np.argmax(P_forward_matrices[-j][:, best_states[-j]]) #Rui's
         # best_states[-j-1] = np.argmax(q_backward) # original from Scott 2002
     return best_states
@@ -1088,7 +1054,7 @@ def Best_Patient_States_treatment(Z, MPmatrixs, patient_tests, patient_observati
         bs0, bl0 = Best_Patient_States_Viterbi(Z, MPmatrix, patient_tests[:(j+1)], patient_observations[:(j+1)], patient_ages[:(j+1)], 0, patient_censor_age, patient_death_state, Alpha, Eta, W, C, ind, inv, verbose)
         best_states_list.append(bs0)
         best_loglikelihood = bl0
-        for i in xrange(len(patient_treatment_indx)-1):
+        for i in range(len(patient_treatment_indx)-1):
             j = patient_treatment_indx[i]
             k = patient_treatment_indx[i+1] + 1
             bsi, bli = Best_Patient_States_Viterbi(Z, MPmatrix, patient_tests[j:k], patient_observations[j:k], patient_ages[j:k], 1, patient_censor_age, patient_death_state, Alpha, Eta, W, C, ind, inv, verbose)
@@ -1105,7 +1071,7 @@ def Best_Patient_States_treatment(Z, MPmatrixs, patient_tests, patient_observati
     # check #
     #########
     if len(best_states) != len(patient_ages):
-        print 'Error in Best_Patient_States_treatment: best state vector length does not match patient_ages vector length.'
+        print ('Error in Best_Patient_States_treatment: best state vector length does not match patient_ages vector length.')
 
     return best_states, best_loglikelihood
 
@@ -1130,7 +1096,7 @@ def Best_Patient_States_treatment0(Z, MPmatrixs, patient_ages, patient_treatment
         bs0, bl0 = Best_Patient_States_Viterbi0(Z, MPmatrix, patient_ages[:(j+1)], 0, Alpha, Eta, W, C, ind, inv, verbose)
         best_states_list.append(bs0)
         best_loglikelihood = bl0
-        for i in xrange(len(patient_treatment_indx)-1):
+        for i in range(len(patient_treatment_indx)-1):
             j = patient_treatment_indx[i]
             k = patient_treatment_indx[i+1] + 1
             bsi, bli = Best_Patient_States_Viterbi0(Z, MPmatrix, patient_ages[j:k], 1, Alpha, Eta, W, C, ind, inv, verbose)
@@ -1147,7 +1113,7 @@ def Best_Patient_States_treatment0(Z, MPmatrixs, patient_ages, patient_treatment
     # check #
     #########
     if len(best_states) != len(patient_ages):
-        print 'Error in Best_Patient_States_treatment: best state vector length does not match patient_ages vector length.'
+        print ('Error in Best_Patient_States_treatment: best state vector length does not match patient_ages vector length.')
 
     return best_states, best_loglikelihood
 
@@ -1163,7 +1129,7 @@ def NegativeLogLikelihood(parameter_vector):
     states_0 = States[0]
     states_1 = States[1]
 
-    for patient_indx in xrange(len(ages)):
+    for patient_indx in range(len(ages)):
         loglik_0 = Loglikelihood(patient_indx, 0, States, Pars)
         # loglik_state1 = Loglikelihood_states(patient_indx, 1, States0, Pars)
         loglik_1 = Loglikelihood(patient_indx, 1, States, Pars)
@@ -1237,75 +1203,15 @@ def NegativeLoglikelihood_shared_grad_caller(parameter_vector_shared, verbose = 
     else:
         return 0 
 
-def Compute_pos_Z_state(p, verbose = False): ### given state Z | S -
-    global currZ_pos, currZ_pos_list
-    # It is a Bernouli(p)
-    t_z = time.clock()
-    if counter == 0:
-        # Rough estimation
-        currZ_pos = [.5 for nvs in xrange(nPatients)]
-    else:
-        prevZ_pos = currZ_pos
-        currZ_pos = []
-        for indx in xrange(nPatients):
-            loglik_0 = Loglikelihood_obs(indx, 0, currStates, currPars)
-            loglik_1 = Loglikelihood_obs(indx, 1, currStates, currPars)
-            tilde_p = np.exp(np.log(p)+loglik_1 - np.log((1-p)*np.exp(loglik_0) + p*np.exp(loglik_1)))
-            currZ_pos.append(tilde_p)
-
-    comm.Barrier()
-    currZ_pos_list = comm.gather(currZ_pos, 0)
-    if rank == 0:
-        print('Compute the posterior of Z costs {}'.format(time.clock() - t_z))
-    ## print the Negative log likelihood
-    if counter > 0:
-        stop = [0]
-        if rank == 0:
-            print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
-            # print ('Current probabilities of Z is: {}'.format(currZ_pos_list))
-        else:
-            NegativeLogLikelihood_caller(curr_parameter_vector)
-    return 0
-
-def Compute_pos_Z(p, verbose = False): ### given no state Z | -
-    global currZ_pos, currZ_pos_list
-    # It is a Bernouli(p)
-    t_z = time.clock()
-    if counter == 0:
-        # Rough estimation
-        currZ_pos = [.5 for nvs in xrange(nPatients)]
-    else:
-        prevZ_pos = currZ_pos
-        currZ_pos = []
-        for indx in xrange(nPatients):
-            loglik_0 = Loglikelihood_obs0(indx, 0, currPars)
-            loglik_1 = Loglikelihood_obs0(indx, 1, currPars)
-            tilde_p = np.exp(np.log(p)+loglik_1 - np.log((1-p)*np.exp(loglik_0) + p*np.exp(loglik_1)))
-            currZ_pos.append(tilde_p)
-
-    comm.Barrier()
-    currZ_pos_list = comm.gather(currZ_pos, 0)
-    if rank == 0:
-        print('Compute the posterior of Z costs {}'.format(time.clock() - t_z))
-    ## print the Negative log likelihood
-    if counter > 0:
-        stop = [0]
-        if rank == 0:
-            print ('Current negative loglikelihood is: {}'.format(NegativeLogLikelihood_caller(curr_parameter_vector, verbose)))
-            # print ('Current probabilities of Z is: {}'.format(currZ_pos_list))
-        else:
-            NegativeLogLikelihood_caller(curr_parameter_vector)
-    return 0
-
 def Compute_Z(verbose = False):
     global currZ_pos, currZ_pos_list
     t_z = time.clock()
     if counter == 0:
-        currZ_pos = [.5 for nvs in xrange(nPatients)]
+        currZ_pos = [.5 for nvs in range(nPatients)]
     else:
         prevZ_pos = currZ_pos
         currZ_pos = []
-        for indx in xrange(nPatients):
+        for indx in range(nPatients):
             loglik_0 = Loglikelihood(indx, 0, currStates, currPars)
             loglik_1 = Loglikelihood(indx, 1, currStates, currPars)
             if loglik_1 > loglik_0:
@@ -1313,16 +1219,6 @@ def Compute_Z(verbose = False):
             else:
                 p = 0
             currZ_pos.append(p)
-
-            # #### test
-            # currloglik = np.log((1- p)*np.exp(loglik_0) + p*np.exp(loglik_1))
-            # prevloglik = np.log((1-prevZ_pos[indx])*np.exp(loglik_0) + prevZ_pos[indx]*np.exp(loglik_1))
-            # if currloglik < prevloglik:
-            #     print ("For rank {}, the {}th patient has currloglik {} and prevloglik {}".format(rank, indx, currloglik, prevloglik))
-            #     print loglik_0
-            #     print loglik_1
-            #     print ("p = {} and prev_p = {}".format(p, prevZ_pos[indx]))
-            # ####
 
     comm.Barrier()
     currZ_pos_list = comm.gather(currZ_pos, 0)
@@ -1676,7 +1572,7 @@ def Loglikelihood_obs0(indx, Z, Pars, verbose = False):
         j = patient_treatment_indx[0]
         loglik0 = Loglikelihood_group_obs0(patient_tests[:(j+1)], patient_observations[:(j+1)], patient_ages[:(j+1)], 0, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
         loglik += loglik0
-        for i in xrange(len(patient_treatment_indx)-1):
+        for i in range(len(patient_treatment_indx)-1):
             j = patient_treatment_indx[i]
             k = patient_treatment_indx[i+1] + 1
             logliki= Loglikelihood_group_obs0(patient_tests[j:k], patient_observations[j:k], patient_ages[j:k], 1, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose)
@@ -1688,164 +1584,138 @@ def Loglikelihood_obs0(indx, Z, Pars, verbose = False):
         loglik = Loglikelihood_group_obs0(patient_tests, patient_observations, patient_ages, 0, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose, do_last = True)
     return loglik    
 
-def Loglikelihood_group_obs0(patient_tests, patient_observations, patient_ages, patient_treatment_status, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose = False, do_last = False):
-    if Z == 0:
-        nStates = 2
-    else:
-        nStates = 4
-    MPmatrix = MPmatrixs[Z]
+def Predict_dir(Z_probs, Pars, lasts, n_mcmc = 1000, rule = 0, time_flag = False): 
+    Alpha = Pars[0][1]
+    true_status = []
+    predicted_status = []
+    predicted_status_probs = []
+    
+    indx = 0
+    for Z_prob, last, patient_observations, patient_tests in zip(Z_probs, lasts, observations_test, testTypes_test):
+        # ts = time.time()
+        indx += 1
+        if indx % 1000 == 999:
+            print ("{} individuals has been completed.".format(indx+1, n_test))
+        if rule == 0:
+            patient_true_status = float(patient_observations[-1][:2,-2:].sum()>0)
+        else:
+            patient_true_status = float(patient_observations[-1][:2,1:].sum()>0)
+        # MCMC 
+        prob = 0.
+        for i in range(n_mcmc):
+            if time_flag:
+                T_cyt = patient_tests[-1][0]
+                T_hist = patient_tests[-1][1]  
+                              
+            else:
+                Z = np.random.choice(2, p=[1-Z_prob, Z_prob])
+                Eta_Z = np.exp(Pars[1][Z])
+                T_cyt = np.random.poisson(lam = np.exp(Eta_Z[0]))[0]
+                T_hist = np.random.poisson(lam = np.exp(Eta_Z[1]))[0]
+            S = np.random.choice(4, p = last)
+            pi_cyt = np.random.dirichlet(alpha = np.exp(Alpha[0])[S,:])
+            pi_hist = np.random.dirichlet(alpha = np.exp(Alpha[1])[S,:])
+            if T_cyt > 0:
+                O_cyt = np.random.multinomial(n = T_cyt, pvals = pi_cyt)
+            else: 
+                O_cyt = np.zeros(4)
+            if T_hist > 0:
+                O_hist = np.random.multinomial(n = T_hist, pvals = pi_hist)
+            else: 
+                O_hist = np.zeros(4)
+            if rule == 0:
+                if (O_cyt[-2:].sum() + O_hist[-2:].sum()) > 0:
+                    prob += 1
+            else:
+                if (O_cyt[1:].sum() + O_hist[1:].sum()) > 0:
+                    prob += 1
+        prob /= n_mcmc
+        patient_predicted_status_prob = prob
+        patient_predicted_status = np.round(prob)
 
-    nvisits = len(patient_ages)
-    ### Initialization ###
-    ### Q[s] ~ Pr[S0=s, O0]
-    Q = np.zeros(nStates)
-    patient_age = patient_ages[0]
-    patient_test = patient_tests[0]
-    patient_observation = patient_observations[0]
-    if patient_treatment_status == 0:
-        for s in xrange(nStates):
-            Q[s] = np.log(ddirichlet_categorical(s,np.exp(C[:, Age2Comp(patient_age, inv)])))
-            # Q[s] = np.log(C[s, Age2Comp(patient_age, inv)])
-            Q[s] += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[s,:])))
-            # Q[s] += np.sum(stats.poisson.logpmf(patient_test, Eta[s,:]))
-            for k in xrange(nTests):
-                if k == 2:
-                    # Q[s] += multinomial_logpmf(patient_observations[0][k, :2], Alpha[k][s, :])
-                    Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[0][k,:2], np.exp(Alpha[k][s,:])))
-                else:
-                    # Q[s] += multinomial_logpmf(patient_observations[0][k, :], Alpha[k][s, :])
-                    Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[0][k,:], np.exp(Alpha[k][s,:])))
-            # P(S0, O0)
-        Q = np.exp(Q)
-    else:
-        Q[0] = 1
-    log_Q = np.log(Q)
+        true_status.append(patient_true_status)
+        predicted_status.append(patient_predicted_status)
+        predicted_status_probs.append(patient_predicted_status_prob)
+        # print("time:{}".format(time.time() - ts))
 
-    ####################
-    ### Forward Pass ###
-    ####################
-    # P_forward_matrices P(Sj-1, Sj, O0-j)
-    P_forward_matrices = [ np.zeros([nStates, nStates]) for patient_age in patient_ages]
-    for j in xrange(1, nvisits):
-        p_transition = ProbTransition(MPmatrix, W, patient_ages[j-1], patient_ages[j], inv)
-        log_prob_obs = np.zeros(nStates)
-        for s in xrange(nStates):
-            log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], np.exp(Eta[s,:])))
-            # log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], Eta[s,:]))
-            for k in xrange(nTests):
-                if k == 2:
-                    # log_prob_obs[s] += multinomial_logpmf(patient_observations[j][k, :2], Alpha[k][s, :])
-                    log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:2], np.exp(Alpha[k][s,:])))               
-                else:
-                    # log_prob_obs[s] += multinomial_logpmf(patient_observations[j][k, :], Alpha[k][s, :])
-                    log_prob_obs[s] += np.log(ddirichlet_mutilnominal(patient_observations[j][k,:], np.exp(Alpha[k][s,:])))
+    true_status = np.asarray(true_status)
+    predicted_status = np.asarray(predicted_status)
+    predicted_status_probs = np.asarray(predicted_status_probs)
+
+    return true_status, predicted_status, predicted_status_probs  
+
+def Evaluate(true_Y, pred_Y, pred_Y_prob):
+    TP = (pred_Y[true_Y==1] == 1).sum()
+    FP = (pred_Y[true_Y==1] == 0).sum()
+    TN = (pred_Y[true_Y==0] == 0).sum()
+    FN = (pred_Y[true_Y==0] == 1).sum()
+    print("TP: {}, FP: {}, TN:{}, FN:{}".format(TP, FP, TN, FN))
+    print("ACC: {}".format(np.round((TP+TN)/(TP+FP+TN+FN), 4)))
+    from sklearn.metrics import roc_curve, auc, f1_score, average_precision_score, precision_score, recall_score, roc_auc_score
+    roc_auc = roc_auc_score(true_Y, pred_Y_prob)
+    f1 = f1_score(true_Y, pred_Y)
+    aver_prec = average_precision_score(true_Y, pred_Y)
+    prec = precision_score(true_Y, pred_Y)
+    recall = recall_score(true_Y, pred_Y)
+    print("Prior: {}".format(args.Z_prior))
+    print("auc: {}, f1: {}, average_prec: {}, prec: {}, recall: {}".format(roc_auc, f1, aver_prec, prec, recall))
         
-        log_P_forward_matrix = np.repeat(log_Q,nStates).reshape([nStates,nStates]) + np.transpose(np.repeat(log_prob_obs,nStates).reshape([nStates,nStates])) + np.log(p_transition[:nStates,:nStates])
-        P_forward_matrix = np.exp(log_P_forward_matrix)
-        #
-        P_forward_matrices[j] = P_forward_matrix
-        #
-        Q = np.sum(P_forward_matrix,0)/np.sum(P_forward_matrix)
-        log_Q = np.log(Q)
-
-    ## P(S_T, O)
-    if nvisits > 1: 
-        PP = np.sum(P_forward_matrices[nvisits-1], 0)
-    else:
-        PP = Q
-    log_PP = np.log(PP)
-
-    # print ("P_forward_matrices", P_forward_matrices)
-    # print ("log_PP", log_PP)
-
-    ## P(S_T, S_last, O)
-    if do_last:
-        # Add the censor statue
-        if patient_censor_age < patient_ages[-1]:
-        # this can happen due to some rounding errors when death is very close to last screening.
-        # Just move the censor date a few month after last visit.
-            patient_censor_age = patient_ages[-1] + 0.25
-        p_transition = ProbTransition(MPmatrix, W, patient_ages[-1], patient_censor_age, inv)
-        if patient_death_state > 0: # this means censor age is age of 'death', not end of observations.
-            log_PP += np.log(p_transition[:nStates,-1])
-        else: # this means censor age is age of end of observations, not 'death'. So we know they are still alive at the time the study ended.
-            log_PP += np.log(1. - p_transition[:nStates,-1])
-
-    # print ("log_PP", log_PP)
-
-    return np.log(np.sum(np.exp(log_PP)))
-
-
-
-
+    # auc curve
+    fpr, tpr, thresholds = roc_curve(true_Y, pred_Y)
+    fig = plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC_lstm')
+    plt.legend(loc="lower right")
+    plt.savefig("../res/ROC_hhmm_{}.png".format(str(args.Z_prior)))
+    plt.close(fig)
 
 if __name__ == "__main__":
-#################################
-####### Initialization ##########
-#################################
+    #################################
+    ####### Initialization ##########
+    #################################
     Initialization()
 
-###################################
-####### Modified EM section #######
-###################################
-    counter  = -1
-    while counter < max_steps_em:
-        counter += 1
-        if rank == 0:
-            print('step {}'.format(counter))
+    #################################
+    ######## Load EM estimates ######
+    #################################
+    Load_EM_res()
+    # print(currPars)
 
-        ###############################################
-        ### Compute the posterior distribution of Z ###
-        ###############################################
-        Compute_pos_Z(p)
-        # Compute_Z() #hard assignment
+    #################################
+    ####### HHMM Prediction #########
+    #################################
+    # Compute predictive distribution of last second state given model index z
+    Compute_pos_last2(currPars, verbose = True)
+    # Compute predictive distribution of last state
+    Compute_pos_last(currPars, verbose = True)
 
-        #################################
-        ### Update the current states ###
-        #################################
-        Update_states()
+    ################################
+    ######## Save Results ##########
+    ################################
+    if not os.path.exists("../res/{}".format(out_folder)):
+        os.mkdir("../res/{}".format(out_folder))
 
-        #############################
-        ### Update all parameters ###
-        #############################
-        # Update_all_pars()
+    with open("../res/{}/res".format(out_folder), "wb") as res:
+        pickle.dump(lasts, res)
+    
+    ############################
+    #######Load Results ########
+    ############################
+    # with open("../res/{}/res_prior_{}".format(out_folder, str(p)), "rb") as res:
+    #     lasts = pickle.load(res)
 
-        #############################################################
-        ### Update all parameters with shared emission parameters ###
-        #############################################################
-        t_s = time.time()
-        # Update "Alpha, Eta" and "W, C" sequentially
-        # ind = ["Alpha", "Eta"]
-        # Update_all_pars_shared()
-        # ind = ["W", "C"]
-        # Update_all_pars_shared()
-        # Update all parameters simutaneously
-        ind = ["Alpha", "Eta", "W", "C"]
-        Update_all_pars_shared()
-        if rank == 0:
-            print("update all shared parameters costs {} s". format(time.time() - t_s))
+    # generate special Z_pos
+    Z_pos = np.ones(n_test)
+    ts = time.time()
+    true_label, predicted_label, predicted_label_prob = Predict_dir(Z_pos, currPars, lasts, time_flag=True)
+    print("prediction costs {}s".format(time.time() - ts))
 
-        ######################################
-        ### Update all parameters by group ###
-        ######################################
-        # Update_all_pars_by_group()
+    Evaluate(true_label, predicted_label, predicted_label_prob )
 
-        ###################
-        ### Save update ###
-        ###################
-        if rank == 0:
-            currAlpha, currEta, currW, currC = currPars
-            if p == 0.5:
-                with open("res_" + "seed_" + str(args.bootstrap_seed), "wb") as em_res:
-                    pickle.dump([counter, currZ_pos_list , currStates_list, currAlpha, currEta, currW, currC, currNegLogLik, inv], em_res)
-            else:
-                print("save results in dictory {}".format(os.getcwd()))
-                with open("res_" + "p_" + str(p) + "seed_" + str(args.bootstrap_seed), "wb") as em_res:
-                    pickle.dump([counter, currZ_pos_list , currStates_list, currAlpha, currEta, currW, currC, currNegLogLik, inv], em_res)
-
-        ####################################
-        ### Broadcast updated parameters ###
-        ####################################
-        comm.Barrier()
-        # Distribute new parameters in our model
-        currPars = comm.bcast(currPars, 0)

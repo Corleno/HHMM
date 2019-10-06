@@ -149,7 +149,7 @@ def Initialization():
 
 def Load_EM_res(verbose = False):
     global currPars
-    with open("../res/EM_hierarchical_16_updated_data_inv4_continuous_80000/res_prior_{}".format(str(args.Z_prior)), "rb") as em_res:
+    with open("../res/EM_hierarchical_16_updated_data_inv4_continuous_80000_10iterations/res_prior_{}".format(str(args.Z_prior)), "rb") as em_res:
         counter, currZ_pos_list , currStates_list, currAlpha, currEta, currW, currC, currNegLogLik, inv = pickle.load(em_res)
         currPars = [currAlpha, currEta, currW, currC]
     if verbose:
@@ -1729,21 +1729,21 @@ if __name__ == "__main__":
     ################################
     ######## Save Results ##########
     ################################
-    # os.chdir("../res/")
-    # if not os.path.exists(out_folder):
-    #     os.makedirs(out_folder)
+    os.chdir("../res/")
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
 
-    # with open("{}/res_prior_{}".format(out_folder, str(p)), "wb") as res:
-    #     pickle.dump(lasts, res)
+    with open("{}/res_prior_{}".format(out_folder, str(p)), "wb") as res:
+        pickle.dump(lasts, res)
     
     ############################
     #######Load Results ########
     ############################
-    with open("../res/{}/res_prior_{}".format(out_folder, str(p)), "rb") as res:
-        lasts = pickle.load(res)
+    # with open("../res/{}/res_prior_{}".format(out_folder, str(p)), "rb") as res:
+    #     lasts = pickle.load(res)
 
-    with open("../res/{}/res_posZ_prior_{}".format(out_folder, str(p)), "rb") as res:
-        Z_pos = pickle.load(res)
+    # with open("../res/{}/res_posZ_prior_{}".format(out_folder, str(p)), "rb") as res:
+    #     Z_pos = pickle.load(res)
 
     # lasts_grade = Predict_grade(currPars, lasts)
     # true_label, predicted_label, predicted_label_prob = Predict(lasts_grade, rule = 0)

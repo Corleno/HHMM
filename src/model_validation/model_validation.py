@@ -387,6 +387,7 @@ def Draw_observations(verbose = False, KM_option = 0):
             plt.show()
     return (0)
 
+
 def Draw_simulations(n_simulate = 1000, verbose = False, option = 2, KM_option = 0):
     maximum = 110.0
     fails = np.repeat(maximum, n_simulate)
@@ -480,8 +481,6 @@ def Draw_simulations(n_simulate = 1000, verbose = False, option = 2, KM_option =
                 patient_observation[1,:] = np.random.multinomial(n = patient_test[1], pvals = np.random.dirichlet(np.exp(Alpha[patient_z][1][patient_state]))) 
             # patient_observations = [patient_observation]
             patient_result = np.max(np.where(np.sum(patient_observation, axis = 0)>0))
-            
-
             # print "patient_observation", patient_observation
 
         fails[i] = patient_age - patient_first_age
@@ -499,7 +498,8 @@ def Draw_simulations(n_simulate = 1000, verbose = False, option = 2, KM_option =
         plt.figure()
         plt.plot(inv_x, inv_y)
         plt.show()
-    return (inv_x, inv_y)
+    return inv_x, inv_y
+
 
 def Draw_simulations_original(n_simulate = 1000, verbose = False, KM_option = 0):
     res_em_single = pickle.load(open('../EM_hierarchical/EM_16_updated_data_inv4_continuous_240000/res'))
@@ -782,7 +782,7 @@ if __name__ == "__main__":
         logging.info("Initialization complete")
 
     ######################################################################
-    ### Compute the Empirical distribution of first sceening test time ###
+    ### Compute the Empirical distribution of first screening test time ###
     ######################################################################
     Comp_start()
     if rank == 0:
@@ -804,7 +804,7 @@ if __name__ == "__main__":
     # Kaplan_Meier(True, KM_option = 0, N_sim = 100, n_sim = 100)
     if rank == 0:
         print ("Start to plot Kaplan Meier curve for version 1")
-        logging,info("Start to plot Kaplan Meier curve for version 1")
+        logging.info("Start to plot Kaplan Meier curve for version 1")
     Kaplan_Meier(True, KM_option = 1, N_sim = 100, n_sim = 100)
 
     ### Divided by ages groups ###

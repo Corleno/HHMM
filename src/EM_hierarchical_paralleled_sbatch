@@ -6,4 +6,5 @@
 
 source ~/.bashrc
 
-srun python EM_hierarchical_paralleled.py --autograd_optim --Z_prior 0.2
+srun python EM_hierarchical_paralleled.py --autograd_optim --Z_prior 0.0001 --max_steps_em 10 --test
+

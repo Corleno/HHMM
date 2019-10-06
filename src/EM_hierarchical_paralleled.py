@@ -1789,6 +1789,7 @@ if __name__ == "__main__":
 ###################################
 ####### Modified EM section #######
 ###################################
+    ts_em = time.time()
     counter  = -1
     while (counter < max_steps_em):
         counter += 1
@@ -1849,3 +1850,4 @@ if __name__ == "__main__":
         comm.Barrier()
         # Distribute new parameters in our model
         currPars = comm.bcast(currPars, 0)
+    print("Total costs {}s".format(ts_em - time.time()))
