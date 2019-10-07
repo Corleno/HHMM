@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# author: Rui Meng
 # date: 05/02/2019
 
 import pickle

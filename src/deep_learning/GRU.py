@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# author: Rui Meng
 # date: 05/03/2019
 
 # LSTM to predict the last visiting statue
