@@ -59,13 +59,3 @@ The save structure has following features:
 4. mcmcPatientTreatmentIndx: treatment_indx[p] patient_treatment_indx (array)
 5. mcmcPatientCensorDates: censor_ages[p] censor_age (scalar)
 6. mcmcPatientDeathStates: death_states[p] death_state ([0,1])
-
-
-3. Data:
-
-dir: updated_data -> "data/distributed_updated_data/"
-
-4. Results:
-dir: 
-### original res/ 
-
