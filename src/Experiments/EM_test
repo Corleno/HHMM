@@ -1,9 +1,0 @@
-#!/home/rui/miniconda3/bin/python3
-# Generate multiple seeds. Here, we generate 10 seeds
-import numpy as np
-import os
-np.random.seed(22)
-n = 10
-seeds = np.random.choice(1000, n)
-for i in range(n):
-	os.system("mpirun -n {} python2 ../EM_exact_death_times_hierarchical_shared.py --autograd_optim --Z_prior 0.2 --bootstrap_seed {} --bootstrap_total 1000 --test --n_patients_per_proc 10 --max_steps_em 2".format(2, seeds[i]))

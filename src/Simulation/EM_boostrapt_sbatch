@@ -1,0 +1,10 @@
+#!/bin/bash
+#SBATCH -t 23:59:59
+#SBATCH -p pbatch
+#SBATCH -N 5
+#SBATCH -n 100
+
+source ~/.bashrc
+
+srun python EM_boostrapt.py
+

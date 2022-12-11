@@ -1,0 +1,661 @@
+import argparse
+import os
+### Libraries ###
+import pickle
+import time
+import numpy as np
+from matfuncs import expm
+from scipy import stats
+from scipy import special
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+def Initialization(cohort_range, test=None, name=None, min_age=None, dataset=None, age_inv=None, model=None, Z_prior=None):
+    global ages_test, testTypes_test, observations_test, treatment_indx_test, censor_ages_test, death_state_test, label_test, ind, nTests, inv, n_inv, MPmatrixs, nPatients_test
+    global out_path, out_folder, max_steps_em, max_steps_optim, autograd_optim, p, n_test
+    global currPars, curr_parameter_vector, threshold_test
+
+    try:
+        os.chdir(os.path.dirname(__file__))
+    except:
+        pass
+
+    if test:
+        out_folder = name + '_' + str(
+            min_age) + '_' + dataset + '_' + age_inv + '_' + model + '_test'
+    else:
+        out_folder = name + '_' + str(min_age) + '_' + dataset + '_' + age_inv + '_' + model
+
+    inv_indx = age_inv
+    p = Z_prior
+
+    ##########################
+    ##### Initialization #####
+    ##########################
+    nStates_0 = 2
+    nStates_1 = 4
+    nTests = 3
+
+    ind = ["Alpha", "Eta", "W", "C"]
+    # ind specifies which parameters need to be optimized:x ["Alpha", "W", "Gamma", "Zeta", "Eta", "A", "C"]
+    inv_list = {"inv14": [20, 23, 27, 30, 33, 37, 40, 43, 47, 50, 53, 57, 60, 200],
+                "inv13": [20, 23, 27, 30, 33, 37, 40, 43, 47, 50, 55, 60, 200],
+                "inv12": [20, 23, 27, 30, 33, 37, 40, 43, 47, 50, 60, 200],
+                "inv11": [20, 23, 27, 30, 33, 37, 40, 45, 50, 60, 200],
+                "inv10": [19, 22, 25, 30, 35, 40, 45, 50, 55, 200],  # expert advice
+                "inv9": [23, 25, 30, 35, 40, 45, 50, 60, 200],  # expert advice
+                "inv8": [20, 25, 30, 35, 40, 50, 60, 200],  # best AIC and Likelihood with 3000 procs.
+                "inv7": [20, 25, 30, 40, 50, 60, 200],  # best AIC with 300 procs
+                "inv6": [23, 30, 40, 50, 60, 200],
+                "inv5": [23, 35, 45, 60, 200],
+                "inv4": [23, 30, 60, 200],
+                "inv3": [29, 69, 200],  # close second AIC with 300 procs
+                "inv2": [23, 200],
+                "inv1": [200]}
+    inv = inv_list[inv_indx]
+    n_inv = len(inv)
+
+    if dataset == 'data_random_240k':
+        data_location = '../../data/data_random_240k/'
+    elif dataset == 'data_random':
+        data_location = '../../data/data_random/'
+    elif dataset == 'data_1000':
+        data_location = '../../data/data_random/'
+    elif dataset == "data_random_240k_test":
+        data_location = '../../data/data_random_240k_test/'
+    elif dataset == "data_survey":
+        data_location = '../../data/survey_data/'
+    else:
+        print("dataset {} is not available".format(dataset))
+
+    # load data
+    testTypes = pickle.load(open(data_location + "mcmcPatientTestTypes", 'rb'), encoding="bytes")
+    observations = pickle.load(open(data_location + "mcmcPatientObservations", 'rb'), encoding="bytes")
+    ages = pickle.load(open(data_location + "mcmcPatientAges", 'rb'), encoding="bytes")
+    treatment_indx = pickle.load(open(data_location + "mcmcPatientTreatmentIndx", 'rb'), encoding="bytes")
+    censor_ages = pickle.load(open(data_location + "mcmcPatientCensorDates", 'rb'), encoding="bytes")
+    death_states = pickle.load(open(data_location + "mcmcPatientDeathStates", 'rb'), encoding="bytes")
+    birth_dates = pickle.load(open(data_location + "mcmcPatientBirthdates", "rb"))
+
+    # Testing data
+    N = len(testTypes)
+    testTypes_test = list()
+    observations_test = list()
+    ages_test = list()
+    treatment_indx_test = list()
+    censor_ages_test = list()
+    death_state_test = list()
+    threshold_test = list()
+
+    for i in range(N):
+        threshold = cohort_range[0]
+        n0 = np.sum(ages[i] < threshold)
+        if ages[i][0] < threshold:
+            temp_obs = observations[i][:n0]
+            # import pdb; pdb.set_trace()
+            if birth_dates[i].year > (2012 - cohort_range[0]) or birth_dates[i].year < (2002 - cohort_range[1]):
+                continue
+            if np.sum(temp_obs, axis=0)[:2, -1].sum() > 0:
+                continue
+            if censor_ages[i] <= cohort_range[0]:
+                continue
+            threshold_test.append(threshold)
+            testTypes_test.append([testTypes[i][:n0], testTypes[i][n0:]])
+            observations_test.append([observations[i][:n0], observations[i][n0:]])
+            ages_test.append([ages[i][:n0], ages[i][n0:]])
+            # import pdb; pdb.set_trace()
+            treatment_indx_test.append([np.array(treatment_indx[i])[np.array(treatment_indx[i]) < n0],
+                                        np.array(treatment_indx[i])[np.array(treatment_indx[i]) >= n0] - n0])
+            censor_ages_test.append(censor_ages[i])
+            death_state_test.append(death_states[i])
+
+    # define Markov Process topology with MPmatrix. The diagonal should be zeros.
+    # A one in element (i,j) indicates a possible transition between states i and j.
+    MPmatrix_0 = np.zeros([nStates_0 + 1, nStates_0 + 1])
+    MPmatrix_0[0, 1] = MPmatrix_0[1, 0] = MPmatrix_0[0, 2] = MPmatrix_0[1, 2] = 1
+    MPmatrix_1 = np.zeros([nStates_1 + 1, nStates_1 + 1])
+    MPmatrix_1[0, 1] = MPmatrix_1[1, 0] = MPmatrix_1[1, 2] = MPmatrix_1[2, 1] = MPmatrix_1[2, 3] = MPmatrix_1[:-1,
+                                                                                                   -1] = 1
+    MPmatrixs = [MPmatrix_0, MPmatrix_1]
+
+    nPatients_test = len(ages_test)
+    print('Number of patients for testing: ', nPatients_test)
+    # import pdb;pdb.set_trace()
+
+    ### Set informative initial parameters
+    temp = 4
+    currAlpha_0 = [np.zeros([nStates_0, 4]), np.zeros([nStates_0, 4]), np.zeros([nStates_0, 2])]
+    currAlpha_0[0][0, 0] = currAlpha_0[0][1, 1] = temp
+    currAlpha_0[1][0, 0] = currAlpha_0[1][1, 1] = temp
+    currAlpha_1 = [np.zeros([nStates_1, 4]), np.zeros([nStates_1, 4]), np.zeros([nStates_1, 2])]
+    currAlpha_1[0][0, 0] = currAlpha_1[0][1, 1] = currAlpha_1[0][2, 2] = currAlpha_1[0][3, 3] = temp
+    currAlpha_1[1][0, 0] = currAlpha_1[1][1, 1] = currAlpha_1[1][2, 2] = currAlpha_1[1][3, 3] = temp
+    currAlpha_1[2][3, 0] = -2
+    currAlpha_1[2][3, 1] = 2
+    currAlpha = [currAlpha_0, currAlpha_1]
+    currEta_0 = np.zeros([nStates_0, 3])
+    currEta_1 = np.zeros([nStates_1, 3])
+    currEta = [currEta_0, currEta_1]
+    if model == "continuous":
+        currW_0 = np.zeros([4, n_inv])
+        currW_0[1, :] = -temp
+        currW_0[3, :] = -temp
+        currW_1 = np.zeros([9, n_inv])
+        currW_1[1, :] = -temp
+        currW_1[4, :] = -temp
+        currW_1[7, :] = -temp
+    elif model == "discrete":
+        currW_0 = -4 * np.ones([4, n_inv])
+        currW_1 = -4 * np.ones([9, n_inv])
+    currW = [currW_0, currW_1]
+    currC_0 = np.zeros([nStates_0, n_inv])
+    currC_1 = np.zeros([nStates_1, n_inv])
+    currC = [currC_0, currC_1]
+    return 0
+
+
+def Load_EM_res(verbose=False):
+    global currPars
+
+    with open("../../res/EM_240000/EM_hierarchical_16_updated_data_inv4_continuous_240000/res_p_0.2seed_0.pickle", "rb") as f:
+        counter, currZ_pos_list, currStates_list, currAlpha, currEta, currW, currC, currNegLogLik, inv = pickle.load(f)
+    # with open("../../data/data_2400/EM_hierarchical_16_updated_data_inv4_continuous_240000/res", "rb") as em_res:
+    #     counter, currZ_pos_list, currStates_list, currAlpha, currEta, currW, currC, currNegLogLik, inv = pickle.load(
+    #         em_res, encoding="bytes")
+        currPars = [currAlpha, currEta, currW, currC]
+
+    if verbose:
+        print(
+            "EM results have been loaded with Pars: Alpha: {}, Eta: {}, W: {}, C:{}.".format(currAlpha, currEta, currW, currC))
+    return 0
+
+
+def Compute_pos_Z_test(p, threshold_test, verbose=False, save_res=False, cohort_range=None, dataset=None):  ### given no state Z | -
+    global Z_pos
+    # It is a Bernouli(p)
+
+    ts = time.time()
+    Z_pos = []
+    # import pdb; pdb.set_trace()
+    for indx in range(nPatients_test):
+        threshold = threshold_test[indx]
+        if indx % 100 == 99:
+            print("{}/{} has been completed".format(indx + 1, nPatients_test))
+        print(indx)
+        # import pdb; pdb.set_trace()
+        loglik_0 = Loglikelihood_obs0_test(indx, 0, currPars, threshold)
+        loglik_1 = Loglikelihood_obs0_test(indx, 1, currPars, threshold)
+        tilde_p = np.exp(np.log(p) + loglik_1 - np.log((1 - p) * np.exp(loglik_0) + p * np.exp(loglik_1)))
+        # if tilde_p < 0.1:
+        #     loglik_0 = Loglikelihood_obs0_test(indx, 0, currPars, threshold, verbose=True)
+        #     loglik_1 = Loglikelihood_obs0_test(indx, 1, currPars, threshold, verbose=True)
+        #     tilde_p = np.exp(np.log(p) + loglik_1 - np.log((1 - p) * np.exp(loglik_0) + p * np.exp(loglik_1)))
+        #     import pdb; pdb.set_trace()
+        Z_pos.append(tilde_p)
+
+    print('Compute the posterior of Z costs {}s'.format(time.time() - ts))
+    if verbose:
+        for indx in range(nPatients_test):
+            print("Patient {}: model index probability: {}".format(indx, Z_pos[indx]))
+
+    if save_res:
+        with open("model_res/{}/cohort_range_{}_{}_post.pickle".format(dataset, cohort_range[0], cohort_range[1]), "wb") as res:
+            pickle.dump(Z_pos, res)
+
+    return 0
+
+
+def Load_pos_Z_test(cohort_range, dataset):
+    with open("model_res/{}/cohort_range_{}_{}_post.pickle".format(dataset, cohort_range[0], cohort_range[1]), "rb") as res:
+        Z_pos = pickle.load(res)
+    return Z_pos
+
+
+def Loglikelihood_obs0_test(indx, Z, Pars, threshold, verbose=False):
+    Alpha = Pars[0][Z]
+    Eta = Pars[1][Z]
+    W = Pars[2][Z]
+    C = Pars[3][Z]
+    MPmatrix = MPmatrixs[Z]
+
+    patient_ages = ages_test[indx][0]
+    patient_tests = testTypes_test[indx][0]
+    patient_observations = observations_test[indx][0]
+    patient_treatment_indx = treatment_indx_test[indx][0]
+    patient_censor_age = threshold
+    patient_death_state = 0
+
+    if len(patient_treatment_indx) == 1:
+        j = patient_treatment_indx[0]
+        loglik0 = Loglikelihood_group_obs0(patient_tests[:(j + 1)], patient_observations[:(j + 1)],
+                                           patient_ages[:(j + 1)], 0, patient_censor_age, patient_death_state, Z, Alpha,
+                                           Eta, W, C, ind, inv, verbose)
+        if j < len(patient_ages):
+            loglik1 = Loglikelihood_group_obs0(patient_tests[j:], patient_observations[j:], patient_ages[j:], 1,
+                                               patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv,
+                                               verbose)
+        else:
+            loglik1 = 0
+        loglik = loglik0 + loglik1
+    elif len(patient_treatment_indx) > 1:
+        loglik = 0
+        j = patient_treatment_indx[0]
+        loglik0 = Loglikelihood_group_obs0(patient_tests[:(j + 1)], patient_observations[:(j + 1)],
+                                           patient_ages[:(j + 1)], 0, patient_censor_age, patient_death_state, Z, Alpha,
+                                           Eta, W, C, ind, inv, verbose)
+        loglik += loglik0
+        for i in range(len(patient_treatment_indx) - 1):
+            j = patient_treatment_indx[i]
+            k = patient_treatment_indx[i + 1] + 1
+            logliki = Loglikelihood_group_obs0(patient_tests[j:k], patient_observations[j:k], patient_ages[j:k], 1,
+                                               patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv,
+                                               verbose)
+            loglik += logliki
+        j = patient_treatment_indx[-1]
+        if j < len(patient_ages):
+            loglik1 = Loglikelihood_group_obs0(patient_tests[j:], patient_observations[j:], patient_ages[j:], 1,
+                                               patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv,
+                                               verbose)
+        else:
+            loglik1 = 0
+        loglik += loglik1
+    else:
+        loglik = Loglikelihood_group_obs0(patient_tests, patient_observations, patient_ages, 0,
+                                          patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv,
+                                          verbose)
+    return loglik
+
+
+def Loglikelihood_group_obs0(patient_tests, patient_observations, patient_ages, patient_treatment_status, patient_censor_age, patient_death_state, Z, Alpha, Eta, W, C, ind, inv, verbose=False, do_last=False):
+    if Z == 0:
+        nStates = 2
+    else:
+        nStates = 4
+    MPmatrix = MPmatrixs[Z]
+
+    nvisits = len(patient_ages)
+    ### Initialization ###
+    ### Q[s] ~ Pr[S0=s, O0]
+    Q = np.zeros(nStates)
+    patient_age = patient_ages[0]
+    patient_test = patient_tests[0]
+    if patient_treatment_status == 0:
+        for s in range(nStates):
+            Q[s] = np.log(ddirichlet_categorical(s, np.exp(C[:, Age2Comp(patient_age, inv)])))
+            # Q[s] = np.log(C[s, Age2Comp(patient_age, inv)])
+            Q[s] += np.sum(stats.poisson.logpmf(patient_test, np.exp(Eta[s, :])))
+            # Q[s] += np.sum(stats.poisson.logpmf(patient_test, Eta[s,:]))
+            for k in range(nTests):
+                if k == 2:
+                    # Q[s] += multinomial_logpmf(patient_observations[0][k, :2], Alpha[k][s, :])
+                    Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[0][k, :2], np.exp(Alpha[k][s, :])))
+                else:
+                    # Q[s] += multinomial_logpmf(patient_observations[0][k, :], Alpha[k][s, :])
+                    Q[s] += np.log(ddirichlet_mutilnominal(patient_observations[0][k, :], np.exp(Alpha[k][s, :])))
+            # P(S0, O0)
+        Q = np.exp(Q)
+    else:
+        Q[0] = 1
+    log_Q = np.log(Q)
+
+    ####################
+    ### Forward Pass ###
+    ####################
+    # P_forward_matrices P(Sj-1, Sj, O0-j)
+    P_forward_matrices = [np.zeros([nStates, nStates]) for patient_age in patient_ages]
+    for j in range(1, nvisits):
+        p_transition = ProbTransition(MPmatrix, W, patient_ages[j - 1], patient_ages[j], inv)
+        log_prob_obs = np.zeros(nStates)
+        for s in range(nStates):
+            # print(patient_tests, nvisits)
+            log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], np.exp(Eta[s, :])))
+            # log_prob_obs[s] += np.sum(stats.poisson.logpmf(patient_tests[j], Eta[s,:]))
+            for k in range(nTests):
+                if k == 2:
+                    # log_prob_obs[s] += multinomial_logpmf(patient_observations[j][k, :2], Alpha[k][s, :])
+                    log_prob_obs[s] += np.log(
+                        ddirichlet_mutilnominal(patient_observations[j][k, :2], np.exp(Alpha[k][s, :])))
+                else:
+                    # log_prob_obs[s] += multinomial_logpmf(patient_observations[j][k, :], Alpha[k][s, :])
+                    log_prob_obs[s] += np.log(
+                        ddirichlet_mutilnominal(patient_observations[j][k, :], np.exp(Alpha[k][s, :])))
+
+        log_P_forward_matrix = np.repeat(log_Q, nStates).reshape([nStates, nStates]) + np.transpose(
+            np.repeat(log_prob_obs, nStates).reshape([nStates, nStates])) + np.log(p_transition[:nStates, :nStates])
+
+        if verbose:
+            print(j)
+            print(np.repeat(log_Q, nStates).reshape([nStates, nStates]))
+            print(np.transpose(np.repeat(log_prob_obs, nStates).reshape([nStates, nStates])))
+            print(np.log(p_transition[:nStates, :nStates]))
+            print(np.exp(log_P_forward_matrix))
+
+        P_forward_matrix = np.exp(log_P_forward_matrix)
+        #
+        P_forward_matrices[j] = P_forward_matrix
+        #
+        # Q = np.sum(P_forward_matrix, 0) / np.sum(P_forward_matrix)
+        Q = np.sum(P_forward_matrix, 0)
+        log_Q = np.log(Q)
+
+    if verbose:
+        print(P_forward_matrices)
+        print([np.sum(mat) for mat in P_forward_matrices])
+
+    ## P(S_T, O)
+    if nvisits > 1:
+        PP = np.sum(P_forward_matrices[nvisits - 1], 0)
+    else:
+        PP = Q
+    log_PP = np.log(PP)
+
+    # print ("P_forward_matrices", P_forward_matrices)
+    # print ("log_PP", log_PP)
+
+    ## P(S_T, S_last, O)
+    if do_last:
+        # Add the censor statue
+        if patient_censor_age < patient_ages[-1]:
+            # this can happen due to some rounding errors when death is very close to last screening.
+            # Just move the censor date a few month after last visit.
+            patient_censor_age = patient_ages[-1] + 0.25
+        p_transition = ProbTransition(MPmatrix, W, patient_ages[-1], patient_censor_age, inv)
+        if patient_death_state > 0:  # this means censor age is age of 'death', not end of observations.
+            log_PP += np.log(p_transition[:nStates, -1])
+        else:  # this means censor age is age of end of observations, not 'death'. So we know they are still alive at the time the study ended.
+            log_PP += np.log(1. - p_transition[:nStates, -1])
+
+    # print ("log_PP", log_PP)
+
+    return np.log(np.sum(np.exp(log_PP)))
+
+
+def ProbTransition_interval(MPmatrix, dt, W, model="continuous"):
+    '''
+        'MPmatrix' should be a square N-by-N matrix of ones and zeros that defines the intensity matrix of the markov process.
+        A 1 at element ij indicates a possible transition between states i and j.
+        A 0 at element ij means no possible transition between states i and j.
+
+        -- Because this is a continuous time Markov Process the diagonals are forced to be zero.
+        -- 'lambdas' is an array of transition intensities for the given patient at a given time interval.
+        -- dt is a scalar. It is the difference in time between two observations.
+
+        '''
+    matrix = np.array(MPmatrix, copy=True)
+
+    if model == 'continuous':
+        matrix_filled = np.zeros_like(matrix, dtype=np.float32)
+        matrix_filled[np.where(matrix > 0)] = np.exp(W)
+        for i in range(matrix.shape[0]):
+            matrix_filled[i, i] = - np.sum(matrix_filled[i, :])
+        out = expm(dt * matrix_filled)  # so far so good...
+    elif model == 'discrete':
+        n_dim = MPmatrix.shape[0]
+        matrix_filled = np.zeros_like(matrix, dtype=np.float32)
+        matrix_filled[np.where(matrix == 1)] = W
+        np.fill_diagonal(matrix, 1)
+        matrix = np.matmul(np.diag(1 + np.arange(n_dim)), matrix)
+        for indx_row in range(n_dim):
+            matrix_filled[np.where(matrix == 1 + indx_row)] = Softmax(matrix_filled[np.where(matrix == 1 + indx_row)])
+        out = np.linalg.matrix_power(matrix_filled, int(round(dt * 12)) if int(
+            round(dt * 12)) > 0 else 1)  # Assume the screening interval is at least one month
+
+    # Normalize the probablity matrix
+    out = np.where(out < 0, 0., out)
+    out = np.where(out > 1, 1., out)
+    norm = np.repeat(np.sum(out, 1), out.shape[0]).reshape(out.shape)
+    out = out / norm
+    return out
+
+
+def ProbTransition(MPmatrix, W, start, end, inv):
+    '''
+        'matrix' should be a square N-by-N matrix of ones and zeros that defines the intensity matrix of the markov process.
+        A 1 at element ij indicates a possible transition between states i and j.
+        A 0 at element ij means no possible transition between states i and j.
+
+        Because this is a continuous time Markov Process the diagonals are forced to be zero.
+
+        hpv_status is 0,1 or -1. If -1, then status is unknown.
+        treatment_status is 0 or 1.
+
+    '''
+    temp = start
+    matrix = np.eye(MPmatrix.shape[0])
+
+    while (temp < end):
+        temp_component = Age2Comp(temp, inv)
+        end_component = Age2Comp(end, inv)
+        if temp_component < end_component:
+            dt = (inv[temp_component] - temp)
+            temp_W = W[:, temp_component]
+            matrix = np.dot(matrix, ProbTransition_interval(MPmatrix, dt, temp_W))
+            temp = inv[temp_component]
+        else:
+            dt = end - temp
+            temp_W = W[:, temp_component]
+            matrix = np.dot(matrix, ProbTransition_interval(MPmatrix, dt, temp_W))
+            temp = inv[temp_component]
+
+    out = matrix
+    # Normalize the probability matrix
+    out = np.where(out < 0, 0., out)
+    out = np.where(out > 1, 1., out)
+    norm = np.repeat(np.sum(out, 1), out.shape[0]).reshape(out.shape)
+    out = out / norm
+    return out
+
+
+def Softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    e_x = np.exp(x - np.max(x))
+    return e_x / np.sum(e_x)
+
+
+def ddirichlet_mutilnominal(x, alpha):
+    n = np.sum(x)
+    alpha0 = sum(alpha)
+    if n == 0:
+        return 1
+    else:
+        return n * special.beta(alpha0, n) / np.prod(
+            np.array([special.beta(alphak, xk) * xk for alphak, xk in zip(alpha, x) if xk > 0]))
+
+
+def ddirichlet_categorical(k, alpha):
+    alpha0 = sum(alpha)
+    res = special.beta(alpha0, 1) / special.beta(alpha[k], 1)
+    return res
+
+
+def Age2Comp(age, inv):  # This function is to specify the intensity component for the certain age(value) and certain transition index.  Interval looks like [ ).
+    temp = 0
+    while age >= inv[temp]:
+        temp += 1
+    return (temp)
+
+
+### Draw the empirical Kaplan Meier curve
+def Draw_observations(ages, observations, censors, thresholds, KM_option = 0):
+    N = len(ages)
+    times = np.zeros(N)
+    censoring = np.zeros(N)
+    for patient_index, patient_ages, patient_observations, patient_censor, patient_threshold in zip(np.arange(len(ages)), ages, observations, censors, thresholds):
+        times[patient_index] = patient_censor - patient_threshold
+        for patient_age, patient_observation in zip(patient_ages, patient_observations):
+            if Option_KM(patient_observation, KM_option):
+                times[patient_index] = patient_age - patient_threshold
+                censoring[patient_index] = 1
+                break
+    return times, censoring
+
+
+### Option with respect ot the definition of Kaplan Meier estimators
+def Option_KM(patient_observation, KM_option):
+    if KM_option == 0:  # failure measured from observed 0 to observed (1,2,3).  Ignore HPV.
+        if np.sum(patient_observation[:2, 1:]) > 0:
+            return 1
+        else:
+            return 0
+
+    if KM_option == 1: # failure measured from observed (0,1) to observed (2,3).  Ignore HPV.
+        if np.sum(patient_observation[:2, 2:]) > 0:
+            return 1
+        else:
+            return 0
+
+
+def generate_KM_features(indexes):
+    ages = [ages_test[index][1] for index in indexes]
+    observations = [observations_test[index][1] for index in indexes]
+    censors = [censor_ages_test[index] for index in indexes]
+    thresholds = [threshold_test[index] for index in indexes]
+    # import pdb; pdb.set_trace()
+    time, censoring = Draw_observations(ages, observations, censors, thresholds, KM_option=1)
+    return time, censoring
+
+
+def main(index_range=0, p_threshold=0.2, dataset=None):
+    global cohort_range
+    #################################
+    ####### Initialization ##########
+    #################################
+    cohort_ranges = [[30, 34], [35, 39], [40, 44], [45, 49], [50, 54], [55, 59], [60, 64], [65, 69]]
+    cohort_range = cohort_ranges[index_range]
+    Initialization(cohort_range, test=args.test, name=args.name, min_age=args.min_age, dataset=dataset,
+                   age_inv=args.age_inv, model=args.model, Z_prior=args.Z_prior)
+
+    #################################
+    ######## Load EM estimates ######
+    #################################
+    Load_EM_res(verbose=True)
+
+    ######################################
+    ######## Frailty classification ######
+    ######################################
+    # Compute predictive distribution of model index
+    Compute_pos_Z_test(p, threshold_test, verbose=False, save_res=True, cohort_range=cohort_range, dataset=dataset)
+    Z_pos = Load_pos_Z_test(cohort_range, dataset=dataset)
+
+    # Estimate the model indexes
+    est_Z = (np.array(Z_pos) > p_threshold)
+    H_indexes = np.arange(nPatients_test)[est_Z]
+    L_indexes = np.arange(nPatients_test)[~est_Z]
+
+    print("Number of high-risk women: {}".format(H_indexes.shape[0]))
+    print("Number of low-risk women: {}".format(L_indexes.shape[0]))
+
+    # with open("threshold_{}_p{}.pickle".format(threshold, p_threshold), "wb") as res:
+    #     pickle.dump([H_indexes, L_indexes, ages_test, observations_test, Z_pos], res)
+    # with open("threshold_{}_p{}.pickle".format(threshold, p_threshold), "rb") as res:
+    #     H_indexes, L_indexes, ages_test, observations_test, Z_pos = pickle.load(res)
+
+    # fig = plt.figure();
+    # plt.hist(Z_pos, bins=50);
+    # plt.show()
+
+    ########################################
+    ######## Plot empirical KM curve #######
+    ########################################
+    # no frailty patients
+    L_time, L_censoring = generate_KM_features(L_indexes)
+    # frailty patients
+    H_time, H_censoring = generate_KM_features(H_indexes)
+
+    data = {'index': np.concatenate([L_indexes, H_indexes]), 'time': np.concatenate([L_time, H_time]),
+            'censoring': np.concatenate([L_censoring, H_censoring]), 'group': np.concatenate(
+            [np.repeat("low risk", L_indexes.shape[0]), np.repeat("high risk", H_indexes.shape[0])])}
+    df = pd.DataFrame(data, columns=['index', 'time', 'censoring', 'group'])
+
+    # import kaplanmeier as km
+    # out = km.fit(df['time'], df['censoring'], df['group'])
+
+    # save results
+    with open("model_res/{}/cohort_range_{}_{}_model_p{}.pickle".format(dataset, cohort_range[0], cohort_range[1], p_threshold),
+              "wb") as res:
+        pickle.dump(df, res)
+
+    # fig = plt.figure()
+    # km.plot(out)
+    # plt.tight_layout()
+    # plt.savefig("cohort_range_{}_{}_p{}.png".format(cohort_range[0], cohort_range[1], p_threshold))
+    # import pdb; pdb.set_trace()
+
+
+def extract_model_df(cohort_range, p_threshold=0.2, dataset=None):
+    #################################
+    ####### Initialization ##########
+    #################################
+
+    Initialization(cohort_range, test=False, name='clinical_application', min_age=16, dataset=dataset, age_inv='inv4', model='continuous', Z_prior=0.2)
+
+    #################################
+    ######## Load EM estimates ######
+    #################################
+    # Load_EM_res(verbose=False)
+
+    ######################################
+    ######## Frailty classification ######
+    ######################################
+    # Compute predictive distribution of model index
+    # Compute_pos_Z_test(p, threshold_test, verbose=False, save_res=True, cohort_range=cohort_range, dataset=dataset)
+    Z_pos = Load_pos_Z_test(cohort_range, dataset=dataset)
+
+    # Estimate the model indexes
+    est_Z = (np.array(Z_pos) > p_threshold)
+    H_indexes = np.arange(nPatients_test)[est_Z]
+    L_indexes = np.arange(nPatients_test)[~est_Z]
+
+    # print("Number of high-risk women: {}".format(H_indexes.shape[0]))
+    # print("Number of low-risk women: {}".format(L_indexes.shape[0]))
+
+    # with open("threshold_{}_p{}.pickle".format(threshold, p_threshold), "wb") as res:
+    #     pickle.dump([H_indexes, L_indexes, ages_test, observations_test, Z_pos], res)
+    # with open("threshold_{}_p{}.pickle".format(threshold, p_threshold), "rb") as res:
+    #     H_indexes, L_indexes, ages_test, observations_test, Z_pos = pickle.load(res)
+
+    ########################################
+    ######## Plot empirical KM curve #######
+    ########################################
+    # no frailty patients
+    L_time, L_censoring = generate_KM_features(L_indexes)
+    # frailty patients
+    H_time, H_censoring = generate_KM_features(H_indexes)
+
+    data = {'index': np.concatenate([L_indexes, H_indexes]), 'time': np.concatenate([L_time, H_time]),
+            'censoring': np.concatenate([L_censoring, H_censoring]), 'group': np.concatenate(
+            [np.repeat("low risk", L_indexes.shape[0]), np.repeat("high risk", H_indexes.shape[0])])}
+    df = pd.DataFrame(data, columns=['index', 'time', 'censoring', 'group'])
+
+    # import kaplanmeier as km
+    # out = km.fit(df['time'], df['censoring'], df['group'])
+
+    # save results
+    # with open("model_res/cohort_range_{}_{}_model_p{}.pickle".format(cohort_range[0], cohort_range[1], p_threshold),
+    #           "wb") as res:
+    #     pickle.dump(df, res)
+
+    return df
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--name", help="name of the experiment", default="clinical_application")
+    parser.add_argument("--min_age", help="minimum age", type=int, default=16)
+    parser.add_argument("--dataset",
+                        help="data specification: data_1000, data_random and data_random_240k are available",
+                        default="data_random_240k")
+    parser.add_argument("--dataset_test",
+                        help="data specification: data_1000, data_random and data_random_240k are available",
+                        default="data_random_240k_test")
+    parser.add_argument("--age_inv", help="age interval sepecification", default="inv4")
+    parser.add_argument("--model", help="discrete or continuous model", default="continuous")
+    parser.add_argument("--test", help="boolean indicator for testing", action='store_true')
+    parser.add_argument("--Z_prior", help="prior probability of Model 1", type=np.float32, default=0.2)
+
+    args = parser.parse_args()
+
+    p_threshold = 0.2
+    for index_range in range(8):
+        main(index_range, p_threshold, dataset=args.dataset_test)
